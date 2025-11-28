@@ -1,0 +1,28 @@
+<mat-card class="stats-card" [class]="'card-' + color" [routerLink]="route">
+  <div class="card-content">
+    <!-- Icon Section -->
+    <div class="icon-wrapper" [class]="'icon-' + color">
+      <mat-icon>{{ icon }}</mat-icon>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-wrapper">
+      <h3 class="stats-title">{{ title }}</h3>
+      <p class="stats-value">{{ getFormattedValue() }}</p>
+      
+      <!-- Change Indicator -->
+      <div class="stats-change" *ngIf="change" [class]="'change-' + changeType">
+        <mat-icon *ngIf="changeType === 'positive'">trending_up</mat-icon>
+        <mat-icon *ngIf="changeType === 'negative'">trending_down</mat-icon>
+        <mat-icon *ngIf="changeType === 'neutral'">trending_flat</mat-icon>
+        <span>{{ change }} vs mes anterior</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hover Effect Overlay -->
+  <div class="hover-overlay">
+    <mat-icon>arrow_forward</mat-icon>
+    <span>Ver detalles</span>
+  </div>
+</mat-card>

@@ -1,0 +1,250 @@
+<div class="auth-container">
+  <div class="auth-background">
+    <!-- Decorative elements -->
+    <div class="gradient-circle circle-1"></div>
+    <div class="gradient-circle circle-2"></div>
+    <div class="gradient-circle circle-3"></div>
+  </div>
+
+  <div class="auth-content">
+    <!-- Left Side - Branding -->
+    <div class="auth-branding">
+      <div class="branding-content">
+        <div class="brand-logo">
+          <mat-icon>apartment</mat-icon>
+        </div>
+        <h1 class="brand-title">Únete a ResidenceHub</h1>
+        <p class="brand-subtitle">Comienza a administrar tu residencia de manera eficiente</p>
+        
+        <div class="features-list">
+          <div class="feature-item">
+            <mat-icon>verified_user</mat-icon>
+            <div>
+              <h3>Registro Seguro</h3>
+              <p>Tus datos están protegidos con encriptación de alta seguridad</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <mat-icon>speed</mat-icon>
+            <div>
+              <h3>Acceso Inmediato</h3>
+              <p>Comienza a usar todas las funcionalidades al instante</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <mat-icon>support_agent</mat-icon>
+            <div>
+              <h3>Soporte 24/7</h3>
+              <p>Nuestro equipo está siempre disponible para ayudarte</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side - Register Form -->
+    <div class="auth-form-container">
+      <mat-card class="auth-card">
+        <div class="card-header">
+          <h2 class="card-title">Crear Cuenta</h2>
+          <p class="card-subtitle">Completa el formulario para registrarte</p>
+        </div>
+
+        <!-- Stepper -->
+        <mat-stepper linear #stepper class="register-stepper">
+          <!-- Step 1: Información Personal -->
+          <mat-step [stepControl]="personalInfoForm" label="Información Personal">
+            <form [formGroup]="personalInfoForm" class="step-form">
+              <h3 class="step-title">Datos Personales</h3>
+
+              <!-- Nombre -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Nombre</mat-label>
+                <input 
+                  matInput 
+                  formControlName="nombre"
+                  placeholder="Tu nombre"
+                  autocomplete="given-name"
+                >
+                <mat-icon matPrefix>person</mat-icon>
+                <mat-error *ngIf="personalInfoForm.get('nombre')?.invalid">
+                  {{ getErrorMessage(personalInfoForm, 'nombre') }}
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Apellido -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Apellido</mat-label>
+                <input 
+                  matInput 
+                  formControlName="apellido"
+                  placeholder="Tu apellido"
+                  autocomplete="family-name"
+                >
+                <mat-icon matPrefix>person_outline</mat-icon>
+                <mat-error *ngIf="personalInfoForm.get('apellido')?.invalid">
+                  {{ getErrorMessage(personalInfoForm, 'apellido') }}
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Teléfono -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Teléfono (Opcional)</mat-label>
+                <input 
+                  matInput 
+                  formControlName="telefono"
+                  placeholder="1234567890"
+                  autocomplete="tel"
+                >
+                <mat-icon matPrefix>phone</mat-icon>
+                <mat-hint>Formato: 10 dígitos sin espacios</mat-hint>
+                <mat-error *ngIf="personalInfoForm.get('telefono')?.invalid">
+                  {{ getErrorMessage(personalInfoForm, 'telefono') }}
+                </mat-error>
+              </mat-form-field>
+
+              <div class="step-actions">
+                <button 
+                  mat-raised-button 
+                  color="primary" 
+                  matStepperNext
+                  [disabled]="personalInfoForm.invalid"
+                  class="next-button"
+                >
+                  Siguiente
+                  <mat-icon>arrow_forward</mat-icon>
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Step 2: Información de Cuenta -->
+          <mat-step [stepControl]="accountInfoForm" label="Información de Cuenta">
+            <form [formGroup]="accountInfoForm" class="step-form">
+              <h3 class="step-title">Credenciales de Acceso</h3>
+
+              <!-- Email -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Correo Electrónico</mat-label>
+                <input 
+                  matInput 
+                  type="email" 
+                  formControlName="email"
+                  placeholder="ejemplo@correo.com"
+                  autocomplete="email"
+                >
+                <mat-icon matPrefix>email</mat-icon>
+                <mat-error *ngIf="accountInfoForm.get('email')?.invalid">
+                  {{ getErrorMessage(accountInfoForm, 'email') }}
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Rol -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tipo de Usuario</mat-label>
+                <mat-select formControlName="rol">
+                  <mat-option *ngFor="let role of roles" [value]="role.value">
+                    {{ role.label }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>badge</mat-icon>
+                <mat-hint>Selecciona tu rol en el sistema</mat-hint>
+              </mat-form-field>
+
+              <!-- Contraseña -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Contraseña</mat-label>
+                <input 
+                  matInput 
+                  [type]="hidePassword ? 'password' : 'text'"
+                  formControlName="password"
+                  placeholder="Mínimo 6 caracteres"
+                  autocomplete="new-password"
+                >
+                <mat-icon matPrefix>lock</mat-icon>
+                <button 
+                  mat-icon-button 
+                  matSuffix 
+                  type="button"
+                  (click)="togglePasswordVisibility('password')"
+                >
+                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="accountInfoForm.get('password')?.invalid">
+                  {{ getErrorMessage(accountInfoForm, 'password') }}
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Confirmar Contraseña -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Confirmar Contraseña</mat-label>
+                <input 
+                  matInput 
+                  [type]="hideConfirmPassword ? 'password' : 'text'"
+                  formControlName="confirmPassword"
+                  placeholder="Repite tu contraseña"
+                  autocomplete="new-password"
+                >
+                <mat-icon matPrefix>lock_outline</mat-icon>
+                <button 
+                  mat-icon-button 
+                  matSuffix 
+                  type="button"
+                  (click)="togglePasswordVisibility('confirmPassword')"
+                >
+                  <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="accountInfoForm.get('confirmPassword')?.invalid">
+                  {{ getErrorMessage(accountInfoForm, 'confirmPassword') }}
+                </mat-error>
+                <mat-error *ngIf="accountInfoForm.hasError('passwordMismatch')">
+                  Las contraseñas no coinciden
+                </mat-error>
+              </mat-form-field>
+
+              <div class="step-actions">
+                <button 
+                  mat-button 
+                  matStepperPrevious
+                  class="back-button"
+                >
+                  <mat-icon>arrow_back</mat-icon>
+                  Atrás
+                </button>
+                <button 
+                  mat-raised-button 
+                  color="primary" 
+                  type="button"
+                  (click)="onSubmit()"
+                  [disabled]="personalInfoForm.invalid || accountInfoForm.invalid || isLoading"
+                  class="submit-button"
+                >
+                  <span *ngIf="!isLoading">Crear Cuenta</span>
+                  <mat-spinner *ngIf="isLoading" diameter="24"></mat-spinner>
+                </button>
+              </div>
+            </form>
+          </mat-step>
+        </mat-stepper>
+
+        <!-- Divider -->
+        <div class="divider">
+          <span>o</span>
+        </div>
+
+        <!-- Login Link -->
+        <div class="login-section">
+          <p class="login-text">¿Ya tienes una cuenta?</p>
+          <a routerLink="/auth/login" class="login-link">
+            Inicia sesión aquí
+          </a>
+        </div>
+      </mat-card>
+
+      <!-- Footer -->
+      <div class="auth-footer">
+        <p>&copy; 2025 ResidenceHub. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </div>
+</div>

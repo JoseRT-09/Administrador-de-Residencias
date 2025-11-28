@@ -1,0 +1,134 @@
+<div class="auth-container">
+  <div class="auth-background">
+    <!-- Decorative elements -->
+    <div class="gradient-circle circle-1"></div>
+    <div class="gradient-circle circle-2"></div>
+    <div class="gradient-circle circle-3"></div>
+  </div>
+
+  <div class="auth-content">
+    <!-- Left Side - Branding -->
+    <div class="auth-branding">
+      <div class="branding-content">
+        <div class="brand-logo">
+          <mat-icon>apartment</mat-icon>
+        </div>
+        <h1 class="brand-title">ResidenceHub</h1>
+        <p class="brand-subtitle">Sistema de Administración de Residencias</p>
+        
+        <div class="features-list">
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Gestión integral de residencias</span>
+          </div>
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Control de pagos y servicios</span>
+          </div>
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Reportes y seguimiento en tiempo real</span>
+          </div>
+          <div class="feature-item">
+            <mat-icon>check_circle</mat-icon>
+            <span>Comunicación efectiva con residentes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="auth-form-container">
+      <mat-card class="auth-card">
+        <div class="card-header">
+          <h2 class="card-title">Iniciar Sesión</h2>
+          <p class="card-subtitle">Accede a tu cuenta para continuar</p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+          <!-- Email Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Correo Electrónico</mat-label>
+            <input 
+              matInput 
+              type="email" 
+              formControlName="email"
+              placeholder="ejemplo@correo.com"
+              autocomplete="email"
+            >
+            <mat-icon matPrefix>email</mat-icon>
+            <mat-error *ngIf="loginForm.get('email')?.invalid">
+              {{ getErrorMessage('email') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Password Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contraseña</mat-label>
+            <input 
+              matInput 
+              [type]="hidePassword ? 'password' : 'text'"
+              formControlName="password"
+              placeholder="Ingresa tu contraseña"
+              autocomplete="current-password"
+            >
+            <mat-icon matPrefix>lock</mat-icon>
+            <button 
+              mat-icon-button 
+              matSuffix 
+              type="button"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="'Mostrar contraseña'"
+              [attr.aria-pressed]="!hidePassword"
+            >
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-error *ngIf="loginForm.get('password')?.invalid">
+              {{ getErrorMessage('password') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Remember Me & Forgot Password -->
+          <div class="form-options">
+            <mat-checkbox formControlName="rememberMe" color="primary">
+              Recordarme
+            </mat-checkbox>
+            <a routerLink="/auth/forgot-password" class="forgot-link">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit"
+            class="submit-button"
+            [disabled]="isLoading"
+          >
+            <span *ngIf="!isLoading">Iniciar Sesión</span>
+            <mat-spinner *ngIf="isLoading" diameter="24"></mat-spinner>
+          </button>
+
+          <!-- Divider -->
+          <div class="divider">
+            <span>o</span>
+          </div>
+
+          <!-- Register Link -->
+          <div class="register-section">
+            <p class="register-text">¿No tienes una cuenta?</p>
+            <a routerLink="/auth/register" class="register-link">
+              Regístrate aquí
+            </a>
+          </div>
+        </form>
+      </mat-card>
+
+      <!-- Footer -->
+      <div class="auth-footer">
+        <p>&copy; 2025 ResidenceHub. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </div>
+</div>
