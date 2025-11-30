@@ -19,6 +19,11 @@ export interface Residence {
   estado: ResidenceStatus;
   created_at?: Date;
   updated_at?: Date;
+  habitaciones?: number;
+  banos?: number;
+  estacionamientos?: number;
+  descripcion?: string;
+  notas_adicionales?: string;
   
   // Relaciones
   dueno?: User;
@@ -72,4 +77,10 @@ export interface ReassignmentHistory {
   residenteAnterior?: User;
   residenteNuevo?: User;
   autorizadoPor?: User;
+}
+
+export enum ReassignmentType {
+  ASIGNACION = 'Asignación',
+  CAMBIO = 'Cambio',
+  LIBERACION = 'Liberación'
 }

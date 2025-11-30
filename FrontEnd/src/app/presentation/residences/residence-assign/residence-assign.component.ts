@@ -17,6 +17,7 @@ import { GetActiveResidentsUseCase } from '../../../domain/use-cases/user/get-ac
 import { Residence, ReassignmentType } from '../../../domain/models/residence.model';
 import { User } from '../../../domain/models/user.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { FilterPipe } from '@shared/pipes/filter.pipe';
 
 @Component({
   selector: 'app-residence-assign',
@@ -33,7 +34,8 @@ import { NotificationService } from '../../../core/services/notification.service
     MatSelectModule,
     MatProgressSpinnerModule,
     MatDividerModule,
-    MatRadioModule
+    MatRadioModule,
+    FilterPipe
   ],
   templateUrl: './residence-assign.component.html',
   styleUrls: ['./residence-assign.component.scss']
@@ -47,7 +49,7 @@ export class ResidenceAssignComponent implements OnInit {
   private getActiveResidents = inject(GetActiveResidentsUseCase);
   private notificationService = inject(NotificationService);
 
-  assignForm: FormGroup;
+  assignForm!: FormGroup;
   residence: Residence | null = null;
   residents: User[] = [];
   isLoading = true;
@@ -90,6 +92,7 @@ export class ResidenceAssignComponent implements OnInit {
   initForm(): void {
     this.assignForm = this.fb.group({
       residente_id: [null],
+      residente_nuevo_id: [null], 
       tipo_cambio: [ReassignmentType.ASIGNACION, [Validators.required]],
       motivo: ['', [Validators.required, Validators.minLength(10)]],
       notas: ['']
@@ -145,11 +148,12 @@ export class ResidenceAssignComponent implements OnInit {
   onSubmit(): void {
     if (this.assignForm.valid) {
       this.isSaving = true;
-      const formData = {
-        residente_id: this.assignForm.value.residente_id,
-        tipo_cambio: this.assignForm.value.tipo_cambio,
-        motivo: this.assignForm.value.motivo,
-        notas: this.assignForm.value.notas
+        const formData = {  
+        residente_id: this.assignForm.get('residente_id')?.value,
+        residente_nuevo_id: this.assignForm.get('residente_nuevo_id')?.value, 
+        tipo_cambio: this.assignForm.get('tipo_cambio')?.value,
+        motivo: this.assignForm.get('motivo')?.value,
+        notas: this.assignForm.get('notas')?.value
       };
 
       this.assignResident.execute(this.residenceId, formData).subscribe({

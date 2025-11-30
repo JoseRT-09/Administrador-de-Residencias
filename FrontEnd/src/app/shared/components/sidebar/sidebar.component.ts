@@ -35,7 +35,7 @@ interface MenuItem {
 export class SidebarComponent implements OnInit {
   private authService = inject(AuthService);
 
-  currentUser$: Observable<User | null>;
+  currentUser$!: Observable<User | null>;
   isCollapsed = false;
 
   menuItems: MenuItem[] = [

@@ -186,7 +186,7 @@ export class ResidenceDetailComponent implements OnInit {
 
   getAdministratorName(residence: Residence): string {
     if (residence.administrador) {
-      return `${residence.administrador.nombre} ${residence.administrador.apellidor}`;
+      return `${residence.administrador.nombre} ${residence.administrador.apellido}`;
     }
     return 'Sin asignar';
   }

@@ -18,6 +18,7 @@ import { GetActiveResidentsUseCase } from '../../../domain/use-cases/user/get-ac
 import { Residence, ResidenceStatus } from '../../../domain/models/residence.model';
 import { User } from '../../../domain/models/user.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { MatChipsModule } from '@angular/material/chips';
 
 @Component({
   selector: 'app-residence-form',
@@ -34,7 +35,8 @@ import { NotificationService } from '../../../core/services/notification.service
     MatSelectModule,
     MatProgressSpinnerModule,
     MatDividerModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    MatChipsModule
   ],
   templateUrl: './residence-form.component.html',
   styleUrls: ['./residence-form.component.scss']
@@ -49,7 +51,7 @@ export class ResidenceFormComponent implements OnInit {
   private getActiveResidents = inject(GetActiveResidentsUseCase);
   private notificationService = inject(NotificationService);
 
-  residenceForm: FormGroup;
+  residenceForm!: FormGroup;
   isEditMode = false;
   residenceId?: number;
   isLoading = false;

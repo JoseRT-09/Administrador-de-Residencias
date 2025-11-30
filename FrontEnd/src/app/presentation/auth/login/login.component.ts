@@ -36,7 +36,7 @@ export class LoginComponent implements OnInit {
   private router = inject(Router);
   private notificationService = inject(NotificationService);
 
-  loginForm: FormGroup;
+  loginForm!: FormGroup;
   hidePassword = true;
   isLoading = false;
 

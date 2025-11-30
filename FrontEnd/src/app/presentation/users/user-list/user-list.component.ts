@@ -22,6 +22,7 @@ import { User, UserRole, UserStatus } from '../../../domain/models/user.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { FilterPipe } from '@shared/pipes/filter.pipe';
 
 @Component({
   selector: 'app-user-list',
@@ -43,7 +44,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatMenuModule,
     MatDialogModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    FilterPipe
   ],
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.scss']

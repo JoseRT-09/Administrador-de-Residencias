@@ -31,10 +31,10 @@
       [title]="card.title"
       [value]="card.value"
       [icon]="card.icon"
-      [color]="card.color"
+      [color]="$any(card.color)"
       [route]="card.route"
       [change]="card.change"
-      [changeType]="card.changeType"
+      [changeType]="$any(card.changeType)"
       [prefix]="card.prefix"
     ></app-stats-card>
   </div>
@@ -49,17 +49,18 @@
     </mat-card-header>
     <mat-card-content>
       <div class="quick-actions-grid">
-        <button
-          *ngFor="let action of quickActions"
-          mat-raised-button
-          [routerLink]="action.route"
-          class="quick-action-button"
-          [class]="'action-' + action.color"
-          *ngIf="hasAccess(action.roles)"
-        >
-          <mat-icon>{{ action.icon }}</mat-icon>
-          <span>{{ action.label }}</span>
-        </button>
+        <ng-container *ngFor="let action of quickActions">
+          <button
+            *ngIf="hasAccess(action.roles)"
+            mat-raised-button
+            [routerLink]="action.route"
+            class="quick-action-button"
+            [class]="'action-' + action.color"
+          >
+            <mat-icon>{{ action.icon }}</mat-icon>
+            <span>{{ action.label }}</span>
+          </button>
+        </ng-container>
       </div>
     </mat-card-content>
   </mat-card>

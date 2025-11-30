@@ -21,6 +21,8 @@ import { Residence, ResidenceStatus } from '../../../domain/models/residence.mod
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { MatDividerModule } from '@angular/material/divider';
+import { FilterPipe } from '@shared/pipes';
 
 @Component({
   selector: 'app-residence-list',
@@ -41,7 +43,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatChipsModule,
     MatMenuModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatDividerModule,
+    FilterPipe
   ],
   templateUrl: './residence-list.component.html',
   styleUrls: ['./residence-list.component.scss']
@@ -59,7 +63,7 @@ export class ResidenceListComponent implements OnInit {
   displayedColumns: string[] = ['numero_unidad', 'bloque', 'piso', 'area_m2', 'dueno', 'residente_actual', 'estado', 'acciones'];
   dataSource = new MatTableDataSource<Residence>();
   
-  filterForm: FormGroup;
+  filterForm!: FormGroup;
   isLoading = true;
   totalResidences = 0;
   pageSize = 10;

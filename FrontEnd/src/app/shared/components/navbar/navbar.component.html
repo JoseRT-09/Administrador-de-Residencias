@@ -99,7 +99,7 @@
 <mat-menu #userMenu="matMenu" class="custom-menu user-menu">
   <div class="user-menu-header">
     <div class="user-avatar-large">
-      {{ getUserInitials(currentUser$ | async) }}
+      {{ (currentUser$ | async) ? getUserInitials((currentUser$ | async)!) : '' }}
     </div>
     <div class="user-details">
       <p class="user-name-large">{{ (currentUser$ | async)?.nombre }} {{ (currentUser$ | async)?.apellido }}</p>

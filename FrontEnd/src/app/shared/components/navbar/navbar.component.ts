@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { AuthService, User } from '../../../core/services/auth.service';
 import { Observable } from 'rxjs';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-navbar',
@@ -19,7 +20,8 @@ import { Observable } from 'rxjs';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatDividerModule
   ],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
@@ -28,7 +30,7 @@ export class NavbarComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  currentUser$: Observable<User | null>;
+  currentUser$!: Observable<User | null>;
   notificationCount = 3; // Esto vendría de un servicio de notificaciones
 
   ngOnInit(): void {

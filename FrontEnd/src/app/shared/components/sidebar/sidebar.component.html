@@ -8,7 +8,7 @@
     <!-- Menu Items -->
     <nav class="sidebar-nav">
       <ng-container *ngFor="let item of menuItems">
-        
+        <a
           *ngIf="hasAccess(item.roles)"
           mat-list-item
           [routerLink]="item.route"

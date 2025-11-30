@@ -16,7 +16,7 @@ import { Observable } from 'rxjs';
 })
 export class LoadingSpinnerComponent implements OnInit {
   private loadingService = inject(LoadingService);
-  loading$: Observable<boolean>;
+  loading$!: Observable<boolean>;
 
   ngOnInit(): void {
     this.loading$ = this.loadingService.loading$;
