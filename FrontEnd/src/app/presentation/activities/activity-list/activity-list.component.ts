@@ -17,12 +17,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDividerModule } from '@angular/material/divider';
 import { GetAllActivitiesUseCase } from '../../../domain/use-cases/activity/get-all-activities.usecase';
 import { DeleteActivityUseCase } from '../../../domain/use-cases/activity/delete-activity.usecase';
 import { Activity, ActivityType, ActivityStatus } from '../../../domain/models/activity.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
+import { FilterPipe } from '../../../shared/pipes/filter.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
@@ -47,7 +49,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatProgressSpinnerModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    TimeAgoPipe
+    MatDividerModule,
+    TimeAgoPipe,
+    FilterPipe
   ],
   templateUrl: './activity-list.component.html',
   styleUrls: ['./activity-list.component.scss']
@@ -61,6 +65,10 @@ export class ActivityListComponent implements OnInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+
+  // Exponer enums al template
+  ActivityType = ActivityType;
+  ActivityStatus = ActivityStatus;
 
   displayedColumns: string[] = ['titulo', 'tipo', 'fecha_inicio', 'ubicacion', 'organizador', 'estado', 'participantes', 'acciones'];
   dataSource = new MatTableDataSource<Activity>();

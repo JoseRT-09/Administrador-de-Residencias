@@ -135,7 +135,6 @@ export class PaymentFormComponent implements OnInit {
       estado: [PaymentStatus.COMPLETADO, [Validators.required]]
     });
 
-    // Listener para cambios en el costo de servicio
     this.paymentForm.get('costo_servicio_id')?.valueChanges.subscribe(costoId => {
       this.onServiceCostChange(costoId);
     });
@@ -193,16 +192,17 @@ export class PaymentFormComponent implements OnInit {
         this.paymentForm.patchValue({
           usuario_id: payment.usuario_id,
           costo_servicio_id: payment.costo_servicio_id,
-          monto: payment.monto,
+          monto: payment.monto_pagado || payment.monto,
           metodo_pago: payment.metodo_pago,
           fecha_pago: new Date(payment.fecha_pago),
-          referencia: payment.referencia,
-          notas: payment.notas,
+          referencia: payment.referencia || '',
+          notas: payment.notas || '',
           estado: payment.estado
         });
         this.isLoading = false;
       },
       error: (error) => {
+        console.error('Error al cargar pago:', error);
         this.notificationService.error('Error al cargar pago');
         this.router.navigate(['/payments']);
         this.isLoading = false;
@@ -223,20 +223,21 @@ export class PaymentFormComponent implements OnInit {
       this.isSaving = true;
       const formData = { ...this.paymentForm.value };
 
-      // Convertir fecha a ISO string
       if (formData.fecha_pago instanceof Date) {
         formData.fecha_pago = formData.fecha_pago.toISOString();
       }
 
-      // Convertir valores vacíos a null
+      formData.monto_pagado = formData.monto;
+      delete formData.monto;
+
       Object.keys(formData).forEach(key => {
         if (formData[key] === '' || formData[key] === undefined) {
           formData[key] = null;
         }
       });
 
-      const operation = this.isEditMode
-        ? this.updatePayment.execute(this.paymentId!, formData)
+      const operation = this.isEditMode && this.paymentId
+        ? this.updatePayment.execute(this.paymentId, formData)
         : this.createPayment.execute(formData);
 
       operation.subscribe({
@@ -247,6 +248,7 @@ export class PaymentFormComponent implements OnInit {
           this.router.navigate(['/payments']);
         },
         error: (error) => {
+          console.error('Error al guardar pago:', error);
           this.notificationService.error('Error al guardar pago');
           this.isSaving = false;
         },

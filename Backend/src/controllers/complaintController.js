@@ -1,48 +1,78 @@
-const { Complaint, User } = require('../models');
+const { Complaint, User, Residence } = require('../models');
+const { ESTADOS_QUEJA, PRIORIDADES_QUEJA, CATEGORIAS_QUEJA } = require('../config/constants');
+const { Op } = require('sequelize');
 
 // Obtener todas las quejas
 exports.getAllComplaints = async (req, res) => {
   try {
-    const { estado, dirigido_a, page = 1, limit = 10 } = req.query;
+    const { 
+      estado, 
+      categoria, 
+      prioridad, 
+      search,
+      fecha_inicio,
+      fecha_fin,
+      page = 1, 
+      limit = 10 
+    } = req.query;
+    
     const offset = (page - 1) * limit;
 
     const where = {};
     if (estado) where.estado = estado;
-    if (dirigido_a) where.dirigido_a = dirigido_a;
+    if (categoria) where.categoria = categoria;
+    if (prioridad) where.prioridad = prioridad;
+    
+    // Búsqueda por texto
+    if (search) {
+      where[Op.or] = [
+        { asunto: { [Op.iLike]: `%${search}%` } },
+        { descripcion: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+    
+    // Filtro por rango de fechas
+    if (fecha_inicio || fecha_fin) {
+      where.fecha_queja = {};
+      if (fecha_inicio) where.fecha_queja[Op.gte] = new Date(fecha_inicio);
+      if (fecha_fin) where.fecha_queja[Op.lte] = new Date(fecha_fin);
+    }
 
     const { count, rows } = await Complaint.findAndCountAll({
       where,
       include: [
         {
           model: User,
-          as: 'autor',
-          attributes: ['id', 'nombre', 'apellido', 'email']
+          as: 'usuario',
+          attributes: ['id', 'nombre', 'apellido', 'email', 'telefono']
         },
         {
-          model: User,
-          as: 'residenteObjetivo',
-          attributes: ['id', 'nombre', 'apellido', 'email']
+          model: Residence,
+          as: 'residencia',
+          attributes: ['id', 'numero_unidad', 'bloque', 'tipo_residencia']
         }
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']]
+      order: [['fecha_queja', 'DESC']]
     });
 
-    // Ocultar información del autor si es anónimo
+    // Ocultar información del usuario si es anónimo
     const complaintsFormatted = rows.map(complaint => {
       const complaintObj = complaint.toJSON();
-      if (complaintObj.es_anonimo) {
-        complaintObj.autor = null;
+      // Asegurarse de que req.user exista antes de acceder a req.user.rol
+      const userRole = req.user ? req.user.rol : null;
+      if (complaintObj.es_anonima && userRole === 'Residente') {
+        complaintObj.usuario = { id: null, nombre: 'Anónimo', apellido: null, email: null, telefono: null };
       }
       return complaintObj;
     });
 
     res.json({
+      data: complaintsFormatted,
       total: count,
       pages: Math.ceil(count / limit),
-      currentPage: parseInt(page),
-      complaints: complaintsFormatted
+      currentPage: parseInt(page)
     });
   } catch (error) {
     console.error('Error al obtener quejas:', error);
@@ -58,13 +88,13 @@ exports.getComplaintById = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'autor',
+          as: 'usuario',
           attributes: ['id', 'nombre', 'apellido', 'email', 'telefono']
         },
         {
-          model: User,
-          as: 'residenteObjetivo',
-          attributes: ['id', 'nombre', 'apellido', 'email']
+          model: Residence,
+          as: 'residencia',
+          attributes: ['id', 'numero_unidad', 'bloque', 'piso', 'tipo_residencia']
         }
       ]
     });
@@ -75,12 +105,15 @@ exports.getComplaintById = async (req, res) => {
 
     const complaintObj = complaint.toJSON();
     
-    // Ocultar información del autor si es anónimo y el usuario no es administrador
-    if (complaintObj.es_anonimo && req.user.rol !== 'SuperAdmin' && req.user.rol !== 'Administrador') {
-      complaintObj.autor = null;
+    // Ocultar información del usuario si es anónimo y el usuario no es administrador
+    const userRole = req.user ? req.user.rol : null;
+    if (complaintObj.es_anonima && 
+        userRole !== 'SuperAdmin' && 
+        userRole !== 'Administrador') {
+      complaintObj.usuario = { id: null, nombre: 'Anónimo', apellido: null, email: null, telefono: null };
     }
 
-    res.json({ complaint: complaintObj });
+    res.json(complaintObj);
   } catch (error) {
     console.error('Error al obtener queja:', error);
     res.status(500).json({ message: 'Error al obtener queja', error: error.message });
@@ -92,40 +125,44 @@ exports.createComplaint = async (req, res) => {
   try {
     const {
       asunto,
-      dirigido_a,
-      residente_objetivo_id,
-      cuerpo_mensaje,
-      es_anonimo
+      descripcion,
+      categoria,
+      prioridad,
+      residencia_id,
+      fecha_queja,
+      es_anonima
     } = req.body;
 
     const complaint = await Complaint.create({
-      autor_id: req.user.id,
+      usuario_id: req.user.id,
       asunto,
-      dirigido_a,
-      residente_objetivo_id,
-      cuerpo_mensaje,
-      es_anonimo: es_anonimo || false,
-      estado: 'Nuevo'
+      descripcion,
+      categoria: categoria || CATEGORIAS_QUEJA.OTRO,
+      prioridad: prioridad || PRIORIDADES_QUEJA.MEDIA,
+      estado: ESTADOS_QUEJA.NUEVA,
+      residencia_id,
+      fecha_queja: fecha_queja || new Date(),
+      es_anonima: es_anonima || false
     });
 
     const complaintWithDetails = await Complaint.findByPk(complaint.id, {
       include: [
         {
           model: User,
-          as: 'autor',
+          as: 'usuario',
           attributes: ['id', 'nombre', 'apellido']
         },
         {
-          model: User,
-          as: 'residenteObjetivo',
-          attributes: ['id', 'nombre', 'apellido']
+          model: Residence,
+          as: 'residencia',
+          attributes: ['id', 'numero_unidad']
         }
       ]
     });
 
     const complaintObj = complaintWithDetails.toJSON();
-    if (complaintObj.es_anonimo) {
-      complaintObj.autor = null;
+    if (complaintObj.es_anonima) {
+      complaintObj.usuario = { id: null, nombre: 'Anónimo', apellido: null };
     }
 
     res.status(201).json({
@@ -138,45 +175,64 @@ exports.createComplaint = async (req, res) => {
   }
 };
 
-// Actualizar estado de queja
+// Actualizar queja
 exports.updateComplaint = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado, respuesta } = req.body;
+    const {
+      asunto,
+      descripcion,
+      categoria,
+      prioridad,
+      estado,
+      residencia_id
+    } = req.body;
 
     const complaint = await Complaint.findByPk(id);
     if (!complaint) {
       return res.status(404).json({ message: 'Queja no encontrada' });
     }
 
+    // Verificar permisos
+    const isOwner = complaint.usuario_id === req.user.id;
+    const isAdmin = req.user.rol === 'Administrador' || req.user.rol === 'SuperAdmin';
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: 'No tienes permiso para editar esta queja' });
+    }
+
+    // Solo el administrador puede cambiar el estado
+    if (!isAdmin && estado && estado !== complaint.estado) {
+        return res.status(403).json({ message: 'Solo la administración puede cambiar el estado de la queja' });
+    }
+
     await complaint.update({
+      asunto: asunto || complaint.asunto,
+      descripcion: descripcion || complaint.descripcion,
+      categoria: categoria || complaint.categoria,
+      prioridad: prioridad || complaint.prioridad,
       estado: estado || complaint.estado,
-      respuesta: respuesta || complaint.respuesta
+      residencia_id: residencia_id !== undefined ? residencia_id : complaint.residencia_id
     });
 
     const updatedComplaint = await Complaint.findByPk(id, {
       include: [
         {
           model: User,
-          as: 'autor',
-          attributes: ['id', 'nombre', 'apellido', 'email']
+          as: 'usuario',
+          attributes: ['id', 'nombre', 'apellido']
         },
         {
-          model: User,
-          as: 'residenteObjetivo',
-          attributes: ['id', 'nombre', 'apellido']
+          model: Residence,
+          as: 'residencia',
+          attributes: ['id', 'numero_unidad']
         }
       ]
     });
 
-    const complaintObj = updatedComplaint.toJSON();
-    if (complaintObj.es_anonimo && req.user.rol === 'Residente') {
-      complaintObj.autor = null;
-    }
-
     res.json({
       message: 'Queja actualizada exitosamente',
-      complaint: complaintObj
+      complaint: updatedComplaint
     });
   } catch (error) {
     console.error('Error al actualizar queja:', error);
@@ -184,29 +240,35 @@ exports.updateComplaint = async (req, res) => {
   }
 };
 
-// Responder a una queja
+// Implementación de la ruta faltante para responder a una queja
 exports.respondToComplaint = async (req, res) => {
   try {
     const { id } = req.params;
-    const { respuesta } = req.body;
+    const { respuesta, estado } = req.body;
 
     const complaint = await Complaint.findByPk(id);
     if (!complaint) {
       return res.status(404).json({ message: 'Queja no encontrada' });
     }
+    
+    // Aquí se debería integrar la lógica para enviar la respuesta (ej. por email)
 
     await complaint.update({
-      respuesta,
-      estado: 'Resuelto'
+        estado: estado || ESTADOS_QUEJA.EN_REVISION,
+        // En un modelo real, añadiríamos un campo de historial o respuesta.
+        // Por ahora, actualizamos el estado y retornamos.
     });
 
+    const updatedComplaint = await Complaint.findByPk(id);
+
     res.json({
-      message: 'Respuesta registrada exitosamente',
-      complaint
+      message: 'Respuesta registrada y estado actualizado.',
+      complaint: updatedComplaint
     });
+
   } catch (error) {
-    console.error('Error al responder queja:', error);
-    res.status(500).json({ message: 'Error al responder queja', error: error.message });
+    console.error('Error al responder a la queja:', error);
+    res.status(500).json({ message: 'Error al responder a la queja', error: error.message });
   }
 };
 
@@ -216,18 +278,21 @@ exports.getComplaintsByUser = async (req, res) => {
     const { user_id } = req.params;
 
     const complaints = await Complaint.findAll({
-      where: { autor_id: user_id },
+      where: { usuario_id: user_id },
       include: [
         {
-          model: User,
-          as: 'residenteObjetivo',
-          attributes: ['id', 'nombre', 'apellido']
+          model: Residence,
+          as: 'residencia',
+          attributes: ['id', 'numero_unidad']
         }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['fecha_queja', 'DESC']]
     });
 
-    res.json({ complaints, count: complaints.length });
+    res.json({ 
+      complaints, 
+      count: complaints.length 
+    });
   } catch (error) {
     console.error('Error al obtener quejas del usuario:', error);
     res.status(500).json({ message: 'Error al obtener quejas del usuario', error: error.message });

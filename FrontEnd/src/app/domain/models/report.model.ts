@@ -27,18 +27,19 @@ export interface Report {
   id: number;
   tipo: ReportType;
   residencia_id?: number;
-  reportado_por?: number;
+  reportado_por?: number;  // Es number según el backend
   titulo: string;
   descripcion: string;
   prioridad: ReportPriority;
   estado: ReportStatus;
   asignado_a?: number;
-  fecha_resolucion?: Date;
-  created_at?: Date;
-  updated_at?: Date;
+  fecha_resolucion?: Date | string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
   
-  // Relaciones
+  // Relaciones (pueden venir del backend con includes)
   Residence?: Residence;
+  residencia?: Residence;  // Alias
   reportadoPor?: User;
   asignadoA?: User;
 }

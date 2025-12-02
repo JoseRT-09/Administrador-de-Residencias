@@ -5,10 +5,21 @@ import { Pipe, PipeTransform } from '@angular/core';
   standalone: true
 })
 export class FilterPipe implements PipeTransform {
-  transform(items: any[], property: string, value: any): any[] {
-    if (!items || !property || value === null || value === undefined) {
+  transform(items: any[], field: string, value: any): any[] {
+    if (!items || !field) {
       return items;
     }
-    return items.filter(item => item[property] === value);
+
+    if (value === null || value === undefined || value === '') {
+      return items;
+    }
+
+    return items.filter(item => {
+      const itemValue = item[field];
+      if (itemValue === null || itemValue === undefined) {
+        return false;
+      }
+      return itemValue === value;
+    });
   }
 }

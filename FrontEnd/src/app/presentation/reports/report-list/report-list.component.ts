@@ -18,6 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatDividerModule } from '@angular/material/divider';
 import { GetAllReportsUseCase } from '../../../domain/use-cases/report/get-all-reports.usecase';
 import { DeleteReportUseCase } from '../../../domain/use-cases/report/delete-report.usecase';
 import { UpdateReportUseCase } from '../../../domain/use-cases/report/update-report.usecase';
@@ -50,6 +51,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatDatepickerModule,
     MatNativeDateModule,
     MatBadgeModule,
+    MatDividerModule,
     TimeAgoPipe
   ],
   templateUrl: './report-list.component.html',
@@ -69,7 +71,7 @@ export class ReportListComponent implements OnInit {
   displayedColumns: string[] = ['titulo', 'tipo', 'prioridad', 'residencia', 'reportado_por', 'estado', 'fecha_reporte', 'acciones'];
   dataSource = new MatTableDataSource<Report>();
   
-  filterForm: FormGroup;
+  filterForm!: FormGroup;
   isLoading = true;
   totalReports = 0;
   pageSize = 10;
@@ -77,10 +79,10 @@ export class ReportListComponent implements OnInit {
 
   tipos = [
     { value: '', label: 'Todos los tipos' },
-    { value: ReportType.MANTENIMIENTO, label: 'Mantenimiento' },
-    { value: ReportType.LIMPIEZA, label: 'Limpieza' },
-    { value: ReportType.SEGURIDAD, label: 'Seguridad' },
-    { value: ReportType.INSTALACIONES, label: 'Instalaciones' },
+    { value: ReportType.INCENDIO, label: 'Incendio' },
+    { value: ReportType.ELECTRICO, label: 'Eléctrico' },
+    { value: ReportType.AGUA, label: 'Agua' },
+    { value: ReportType.ROBO, label: 'Robo' },
     { value: ReportType.OTRO, label: 'Otro' }
   ];
 
@@ -203,24 +205,24 @@ export class ReportListComponent implements OnInit {
 
   getTypeClass(type: ReportType): string {
     const typeMap: Record<ReportType, string> = {
-      [ReportType.MANTENIMIENTO]: 'type-maintenance',
-      [ReportType.LIMPIEZA]: 'type-cleaning',
-      [ReportType.SEGURIDAD]: 'type-security',
-      [ReportType.INSTALACIONES]: 'type-facilities',
+      [ReportType.INCENDIO]: 'type-fire',
+      [ReportType.ELECTRICO]: 'type-electric',
+      [ReportType.AGUA]: 'type-water',
+      [ReportType.ROBO]: 'type-theft',
       [ReportType.OTRO]: 'type-other'
     };
-    return typeMap[type];
+    return typeMap[type] || 'type-other';
   }
 
   getTypeIcon(type: ReportType): string {
     const iconMap: Record<ReportType, string> = {
-      [ReportType.MANTENIMIENTO]: 'build',
-      [ReportType.LIMPIEZA]: 'cleaning_services',
-      [ReportType.SEGURIDAD]: 'security',
-      [ReportType.INSTALACIONES]: 'apartment',
+      [ReportType.INCENDIO]: 'local_fire_department',
+      [ReportType.ELECTRICO]: 'flash_on',
+      [ReportType.AGUA]: 'water_drop',
+      [ReportType.ROBO]: 'security',
       [ReportType.OTRO]: 'help_outline'
     };
-    return iconMap[type];
+    return iconMap[type] || 'help_outline';
   }
 
   getStatusClass(status: ReportStatus): string {
@@ -264,8 +266,8 @@ export class ReportListComponent implements OnInit {
   }
 
   getReporterName(report: Report): string {
-    if (report.reportado_por) {
-      return `${report.reportado_por.nombre} ${report.reportado_por.apellido}`;
+    if (report.reportadoPor) {
+      return `${report.reportadoPor.nombre} ${report.reportadoPor.apellido}`;
     }
     return 'Usuario desconocido';
   }
@@ -278,7 +280,7 @@ export class ReportListComponent implements OnInit {
     if (this.authService.isAdmin()) return true;
     
     // Usuario puede editar sus propios reportes si están abiertos
-    return report.reportado_por?.id === currentUser.id && report.estado === ReportStatus.ABIERTO;
+    return report.reportado_por === currentUser.id && report.estado === ReportStatus.ABIERTO;
   }
 
   canDelete(): boolean {
@@ -299,5 +301,15 @@ export class ReportListComponent implements OnInit {
 
   getCriticalCount(): number {
     return this.dataSource.data.filter(r => r.prioridad === ReportPriority.CRITICA).length;
+  }
+
+  // Helper para obtener residencia
+  getResidence(report: Report) {
+    return report.Residence || report.residencia;
+  }
+
+  // Helper para obtener fecha de creación
+  getCreatedDate(report: Report): Date | string {
+    return report.created_at || new Date();
   }
 }

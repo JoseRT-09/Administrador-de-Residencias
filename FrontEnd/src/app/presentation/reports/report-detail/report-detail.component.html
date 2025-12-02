@@ -102,7 +102,7 @@
             <h2>{{ report.titulo }}</h2>
             <p class="time-ago">
               <mat-icon>schedule</mat-icon>
-              {{ report.fecha_reporte | timeAgo }}
+              {{ getCreatedDate() | timeAgo }}
             </p>
           </div>
         </div>
@@ -146,18 +146,21 @@
             <mat-icon>person</mat-icon>
             Reportado Por
           </h4>
-          <div class="user-info" *ngIf="report.reportado_por">
+          <div class="user-info" *ngIf="report.reportadoPor">
             <div class="user-avatar">
-              {{ getUserInitials(report.reportado_por.nombre, report.reportado_por.apellido) }}
+              {{ getUserInitials(report.reportadoPor.nombre, report.reportadoPor.apellido) }}
             </div>
             <div class="user-details">
               <span class="user-name">{{ getReporterName() }}</span>
-              <span class="user-email">{{ report.reportado_por.email }}</span>
-              <span class="user-phone" *ngIf="report.reportado_por.telefono">
+              <span class="user-email">{{ report.reportadoPor.email }}</span>
+              <span class="user-phone" *ngIf="report.reportadoPor.telefono">
                 <mat-icon>phone</mat-icon>
-                {{ report.reportado_por.telefono }}
+                {{ report.reportadoPor.telefono }}
               </span>
             </div>
+          </div>
+          <div *ngIf="!report.reportadoPor" class="no-data">
+            <span>Información no disponible</span>
           </div>
         </div>
 
@@ -168,17 +171,17 @@
             Ubicación
           </h4>
           <div class="location-info">
-            <div class="location-item" *ngIf="report.residencia">
+            <div class="location-item" *ngIf="getResidence()">
               <mat-icon>home</mat-icon>
               <div>
                 <span class="location-label">Residencia</span>
                 <span class="location-value">
-                  Unidad {{ report.residencia.numero_unidad }}
-                  <span *ngIf="report.residencia.bloque"> - Bloque {{ report.residencia.bloque }}</span>
+                  Unidad {{ getResidence()?.numero_unidad }}
+                  <span *ngIf="getResidence()?.bloque"> - Bloque {{ getResidence()?.bloque }}</span>
                 </span>
               </div>
             </div>
-            <div class="location-item" *ngIf="!report.residencia">
+            <div class="location-item" *ngIf="!getResidence()">
               <mat-icon>public</mat-icon>
               <div>
                 <span class="location-label">Área</span>
@@ -198,8 +201,8 @@
             <div class="timeline-item">
               <mat-icon>event</mat-icon>
               <div>
-                <span class="timeline-label">Reportado</span>
-                <span class="timeline-value">{{ report.fecha_reporte | date: 'dd/MM/yyyy HH:mm' }}</span>
+                <span class="timeline-label">Creado</span>
+                <span class="timeline-value">{{ report.created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
               </div>
             </div>
             <div class="timeline-item" *ngIf="report.fecha_resolucion">
@@ -218,16 +221,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Additional Notes -->
-      <div class="notes-section" *ngIf="report.notas_adicionales">
-        <mat-divider></mat-divider>
-        <h3>
-          <mat-icon>notes</mat-icon>
-          Notas Adicionales
-        </h3>
-        <p>{{ report.notas_adicionales }}</p>
       </div>
     </mat-card>
 

@@ -33,6 +33,10 @@ export class AmenityDetailComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
 
+  // Exponer enums al template
+  AmenityStatus = AmenityStatus;
+  AmenityType = AmenityType;
+
   amenity: Amenity | null = null;
   isLoading = true;
   amenityId!: number;

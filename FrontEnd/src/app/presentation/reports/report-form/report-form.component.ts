@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatChipsModule } from '@angular/material/chips';
 import { GetReportByIdUseCase } from '../../../domain/use-cases/report/get-report-by-id.usecase';
 import { CreateReportUseCase } from '../../../domain/use-cases/report/create-report.usecase';
 import { UpdateReportUseCase } from '../../../domain/use-cases/report/update-report.usecase';
@@ -37,7 +38,8 @@ import { AuthService } from '../../../core/services/auth.service';
     MatProgressSpinnerModule,
     MatDividerModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatChipsModule
   ],
   templateUrl: './report-form.component.html',
   styleUrls: ['./report-form.component.scss']
@@ -60,36 +62,37 @@ export class ReportFormComponent implements OnInit {
   isSaving = false;
   residences: Residence[] = [];
 
+  // Tipos actualizados según el backend
   tipos = [
     { 
-      value: ReportType.MANTENIMIENTO, 
-      label: 'Mantenimiento',
-      icon: 'build',
-      description: 'Reparaciones y mantenimiento general'
+      value: ReportType.INCENDIO, 
+      label: 'Incendio',
+      icon: 'local_fire_department',
+      description: 'Emergencias relacionadas con fuego'
     },
     { 
-      value: ReportType.LIMPIEZA, 
-      label: 'Limpieza',
-      icon: 'cleaning_services',
-      description: 'Aseo y limpieza de áreas comunes'
+      value: ReportType.ELECTRICO, 
+      label: 'Eléctrico',
+      icon: 'flash_on',
+      description: 'Problemas con instalaciones eléctricas'
     },
     { 
-      value: ReportType.SEGURIDAD, 
-      label: 'Seguridad',
+      value: ReportType.AGUA, 
+      label: 'Agua',
+      icon: 'water_drop',
+      description: 'Fugas y problemas de plomería'
+    },
+    { 
+      value: ReportType.ROBO, 
+      label: 'Robo',
       icon: 'security',
-      description: 'Incidentes de seguridad'
-    },
-    { 
-      value: ReportType.INSTALACIONES, 
-      label: 'Instalaciones',
-      icon: 'apartment',
-      description: 'Problemas con las instalaciones'
+      description: 'Incidentes de seguridad y robos'
     },
     { 
       value: ReportType.OTRO, 
       label: 'Otro',
       icon: 'help_outline',
-      description: 'Otros tipos de reportes'
+      description: 'Otros tipos de incidencias'
     }
   ];
 
@@ -158,18 +161,13 @@ export class ReportFormComponent implements OnInit {
   }
 
   initForm(): void {
-    const currentUser = this.authService.getCurrentUser();
-    
     this.reportForm = this.fb.group({
       titulo: ['', [Validators.required, Validators.minLength(5)]],
       descripcion: ['', [Validators.required, Validators.minLength(10)]],
-      tipo: [ReportType.MANTENIMIENTO, [Validators.required]],
+      tipo: [ReportType.OTRO, [Validators.required]],
       prioridad: [ReportPriority.MEDIA, [Validators.required]],
       estado: [ReportStatus.ABIERTO, [Validators.required]],
-      residencia_id: [null],
-      reportado_por_id: [currentUser?.id, [Validators.required]],
-      fecha_reporte: [new Date(), [Validators.required]],
-      notas_adicionales: ['']
+      residencia_id: [null]
     });
   }
 
@@ -206,10 +204,7 @@ export class ReportFormComponent implements OnInit {
           tipo: report.tipo,
           prioridad: report.prioridad,
           estado: report.estado,
-          residencia_id: report.residencia_id,
-          reportado_por_id: report.reportado_por_id,
-          fecha_reporte: new Date(report.fecha_reporte),
-          notas_adicionales: report.notas_adicionales
+          residencia_id: report.residencia_id
         });
         this.isLoading = false;
       },
@@ -225,11 +220,6 @@ export class ReportFormComponent implements OnInit {
     if (this.reportForm.valid) {
       this.isSaving = true;
       const formData = { ...this.reportForm.value };
-
-      // Convertir fecha a ISO string
-      if (formData.fecha_reporte instanceof Date) {
-        formData.fecha_reporte = formData.fecha_reporte.toISOString();
-      }
 
       // Convertir valores vacíos a null
       Object.keys(formData).forEach(key => {
@@ -293,5 +283,10 @@ export class ReportFormComponent implements OnInit {
     }
     
     return '';
+  }
+
+  getTypeIcon(type: ReportType): string {
+    const tipo = this.tipos.find(t => t.value === type);
+    return tipo?.icon || 'help_outline';
   }
 }

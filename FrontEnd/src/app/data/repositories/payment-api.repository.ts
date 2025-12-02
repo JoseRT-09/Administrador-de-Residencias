@@ -4,8 +4,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { PaymentRepository } from '../../domain/repositories/payment.repository';
-import { PaginatedResponse, QueryParams } from '../../domain/repositories/base.repository';
-import { Payment, CreatePaymentDto } from '../../domain/models/payment.model';
+import { PaginatedResponse, QueryParams } from '@domain/repositories';
+import { Payment, CreatePaymentDto, UpdatePaymentDto } from '../../domain/models/payment.model';
 
 @Injectable({
   providedIn: 'root'
@@ -30,20 +30,26 @@ export class PaymentApiRepository extends PaymentRepository {
         total: response.total,
         pages: response.pages,
         currentPage: response.currentPage,
-        data: response.payments
+        data: this.transformPayments(response.payments)
       }))
     );
   }
 
   getById(id: number): Observable<Payment> {
     return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
-      map(response => response.payment)
+      map(response => this.transformPayment(response.payment))
     );
   }
 
   create(payment: CreatePaymentDto): Observable<Payment> {
     return this.http.post<any>(this.apiUrl, payment).pipe(
-      map(response => response.payment)
+      map(response => this.transformPayment(response.payment))
+    );
+  }
+
+  update(id: number, payment: UpdatePaymentDto): Observable<Payment> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, payment).pipe(
+      map(response => this.transformPayment(response.payment))
     );
   }
 
@@ -52,7 +58,12 @@ export class PaymentApiRepository extends PaymentRepository {
   }
 
   getByResident(residentId: number): Observable<{ payments: Payment[], totalPaid: number }> {
-    return this.http.get<any>(`${this.apiUrl}/resident/${residentId}`);
+    return this.http.get<any>(`${this.apiUrl}/resident/${residentId}`).pipe(
+      map(response => ({
+        payments: this.transformPayments(response.payments),
+        totalPaid: response.totalPaid
+      }))
+    );
   }
 
   getSummary(year?: number): Observable<any> {
@@ -61,5 +72,29 @@ export class PaymentApiRepository extends PaymentRepository {
       params = params.set('year', year.toString());
     }
     return this.http.get<any>(`${this.apiUrl}/summary/monthly`, { params });
+  }
+
+  private transformPayment(payment: any): Payment {
+    return {
+      ...payment,
+      monto: payment.monto_pagado || payment.monto,
+      usuario: payment.residente || payment.usuario,
+      residente: payment.residente || payment.usuario,
+      costoServicio: this.transformServiceCost(payment.servicioCosto || payment.costoServicio),
+      servicioCosto: this.transformServiceCost(payment.servicioCosto || payment.costoServicio)
+    };
+  }
+
+  private transformPayments(payments: any[]): Payment[] {
+    return payments.map(p => this.transformPayment(p));
+  }
+
+  private transformServiceCost(serviceCost: any): any {
+    if (!serviceCost) return null;
+    return {
+      ...serviceCost,
+      concepto: serviceCost.nombre_servicio || serviceCost.concepto,
+      residencia: serviceCost.Residence || serviceCost.residencia
+    };
   }
 }

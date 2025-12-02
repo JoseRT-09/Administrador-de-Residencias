@@ -1,3 +1,4 @@
+// Backend/src/middlewares/validation.js (CORREGIDO)
 const { body, validationResult } = require('express-validator');
 
 // Middleware para validar errores
@@ -47,30 +48,31 @@ exports.validatePayment = [
 
 // Validaciones para reportes
 exports.validateReport = [
-  body('tipo').isIn(['Incendio', 'Eléctrico', 'Agua', 'Robo', 'Otro']).withMessage('Tipo de reporte inválido'),
+  body('tipo').isIn(['Mantenimiento', 'Limpieza', 'Seguridad', 'Instalaciones', 'Otro']).withMessage('Tipo de reporte inválido'),
   body('titulo').trim().notEmpty().withMessage('El título es requerido'),
   body('descripcion').trim().notEmpty().withMessage('La descripción es requerida'),
   body('prioridad').optional().isIn(['Baja', 'Media', 'Alta', 'Crítica']).withMessage('Prioridad inválida')
 ];
 
-// Validaciones para quejas
+// Validaciones para quejas (Alineado con Complaint.js)
 exports.validateComplaint = [
   body('asunto').trim().notEmpty().withMessage('El asunto es requerido'),
-  body('cuerpo_mensaje').trim().notEmpty().withMessage('El mensaje es requerido'),
-  body('dirigido_a').optional().isIn(['Administración', 'Residente', 'Mantenimiento']).withMessage('Destinatario inválido')
+  body('descripcion').trim().notEmpty().withMessage('La descripción es requerida')
 ];
 
-// Validaciones para actividades
+// Validaciones para actividades (Alineado con Activity.js)
 exports.validateActivity = [
-  body('nombre').trim().notEmpty().withMessage('El nombre de la actividad es requerido'),
-  body('fecha_hora').isISO8601().withMessage('Fecha y hora inválida'),
-  body('cupo_maximo').optional().isInt({ min: 1 }).withMessage('El cupo máximo debe ser un número entero positivo')
+  body('titulo').trim().notEmpty().withMessage('El nombre de la actividad es requerido'),
+  body('tipo').isIn(['Reunión', 'Evento', 'Mantenimiento', 'Asamblea', 'Celebración', 'Otro']).withMessage('Tipo de actividad inválido'),
+  body('fecha_inicio').isISO8601().withMessage('Fecha y hora de inicio inválida'),
+  body('fecha_fin').optional().isISO8601().withMessage('Fecha y hora de fin inválida'),
+  body('max_participantes').optional().isInt({ min: 0 }).withMessage('El cupo máximo debe ser un número entero positivo')
 ];
 
-// Validaciones para amenidades
+// Validaciones para amenidades (Alineado con Amenity.js)
 exports.validateAmenity = [
   body('nombre').trim().notEmpty().withMessage('El nombre de la amenidad es requerido'),
-  body('capacidad').optional().isInt({ min: 1 }).withMessage('La capacidad debe ser un número entero positivo')
+  body('capacidad_maxima').optional().isInt({ min: 1 }).withMessage('La capacidad debe ser un número entero positivo')
 ];
 
 // Validaciones para reservas

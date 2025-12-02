@@ -1,4 +1,5 @@
 const { Activity, User } = require('../models');
+const { Op } = require('sequelize');
 
 // Obtener todas las actividades
 exports.getAllActivities = async (req, res) => {
@@ -14,13 +15,13 @@ exports.getAllActivities = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'organizador',
+          as: 'organizador', // Alias Correcto
           attributes: ['id', 'nombre', 'apellido', 'email']
         }
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['fecha_hora', 'ASC']]
+      order: [['fecha_inicio', 'ASC']]
     });
 
     res.json({
@@ -43,7 +44,7 @@ exports.getActivityById = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'organizador',
+          as: 'organizador', // Alias Correcto
           attributes: ['id', 'nombre', 'apellido', 'email', 'telefono']
         }
       ]
@@ -64,20 +65,24 @@ exports.getActivityById = async (req, res) => {
 exports.createActivity = async (req, res) => {
   try {
     const {
-      nombre,
+      titulo, // Campo corregido
       descripcion,
-      fecha_hora,
+      tipo,
+      fecha_inicio, // Campo corregido
+      fecha_fin,
       ubicacion,
-      cupo_maximo
+      max_participantes // Campo corregido
     } = req.body;
 
     const activity = await Activity.create({
-      nombre,
+      titulo,
       descripcion,
-      fecha_hora,
+      tipo,
+      fecha_inicio,
+      fecha_fin,
       ubicacion,
       organizador_id: req.user.id,
-      cupo_maximo,
+      max_participantes,
       inscritos_count: 0,
       estado: 'Programada'
     });
@@ -107,11 +112,13 @@ exports.updateActivity = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      nombre,
+      titulo,
       descripcion,
-      fecha_hora,
+      tipo,
+      fecha_inicio,
+      fecha_fin,
       ubicacion,
-      cupo_maximo,
+      max_participantes,
       estado
     } = req.body;
 
@@ -121,11 +128,13 @@ exports.updateActivity = async (req, res) => {
     }
 
     await activity.update({
-      nombre: nombre || activity.nombre,
+      titulo: titulo || activity.titulo,
       descripcion: descripcion || activity.descripcion,
-      fecha_hora: fecha_hora || activity.fecha_hora,
+      tipo: tipo || activity.tipo,
+      fecha_inicio: fecha_inicio || activity.fecha_inicio,
+      fecha_fin: fecha_fin !== undefined ? fecha_fin : activity.fecha_fin,
       ubicacion: ubicacion || activity.ubicacion,
-      cupo_maximo: cupo_maximo !== undefined ? cupo_maximo : activity.cupo_maximo,
+      max_participantes: max_participantes !== undefined ? max_participantes : activity.max_participantes,
       estado: estado || activity.estado
     });
 
@@ -178,7 +187,7 @@ exports.getUpcomingActivities = async (req, res) => {
 
     const activities = await Activity.findAll({
       where: {
-        fecha_hora: { [Op.gte]: now },
+        fecha_inicio: { [Op.gte]: now },
         estado: 'Programada'
       },
       include: [
@@ -188,7 +197,7 @@ exports.getUpcomingActivities = async (req, res) => {
           attributes: ['id', 'nombre', 'apellido']
         }
       ],
-      order: [['fecha_hora', 'ASC']],
+      order: [['fecha_inicio', 'ASC']],
       limit: 10
     });
 
@@ -209,7 +218,7 @@ exports.registerAttendance = async (req, res) => {
       return res.status(404).json({ message: 'Actividad no encontrada' });
     }
 
-    if (activity.cupo_maximo && activity.inscritos_count >= activity.cupo_maximo) {
+    if (activity.max_participantes && activity.inscritos_count >= activity.max_participantes) {
       return res.status(400).json({ message: 'La actividad ha alcanzado el cupo máximo' });
     }
 

@@ -27,6 +27,12 @@ router.put('/:id',
   amenityController.updateAmenity
 );
 
+// Actualizar disponibilidad/estado de amenidad (Solo Admin y SuperAdmin)
+router.post('/:id/availability', // AGREGADA
+  authorizeRoles(ROLES.ADMINISTRADOR, ROLES.SUPER_ADMIN),
+  amenityController.updateAmenityAvailability
+);
+
 // Eliminar amenidad (Solo SuperAdmin)
 router.delete('/:id', 
   authorizeRoles(ROLES.SUPER_ADMIN),

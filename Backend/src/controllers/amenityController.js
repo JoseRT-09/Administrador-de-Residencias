@@ -4,11 +4,11 @@ const { Op } = require('sequelize');
 // Obtener todas las amenidades
 exports.getAllAmenities = async (req, res) => {
   try {
-    const { disponibilidad, page = 1, limit = 10 } = req.query;
+    const { estado, page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
 
     const where = {};
-    if (disponibilidad) where.disponibilidad = disponibilidad;
+    if (estado) where.estado = estado; // Usando 'estado' como en el modelo
 
     const { count, rows } = await Amenity.findAndCountAll({
       where,
@@ -52,25 +52,31 @@ exports.createAmenity = async (req, res) => {
     const {
       nombre,
       descripcion,
+      tipo,
       ubicacion,
-      capacidad,
-      horario_apertura,
-      horario_cierre,
-      requiere_reserva,
-      costo_uso,
+      capacidad_maxima, // Campo corregido
+      horario_inicio, // Campo corregido
+      horario_fin, // Campo corregido
+      disponible_reserva, // Campo correcto
+      requiere_aprobacion, // Campo correcto
+      costo_reserva, // Campo corregido
+      reglas,
       imagen_url
     } = req.body;
 
     const amenity = await Amenity.create({
       nombre,
       descripcion,
+      tipo,
       ubicacion,
-      capacidad,
-      disponibilidad: 'Disponible',
-      horario_apertura,
-      horario_cierre,
-      requiere_reserva: requiere_reserva || false,
-      costo_uso: costo_uso || 0.00,
+      capacidad_maxima,
+      estado: 'Disponible',
+      horario_inicio,
+      horario_fin,
+      disponible_reserva: disponible_reserva !== undefined ? disponible_reserva : true,
+      requiere_aprobacion: requiere_aprobacion || false,
+      costo_reserva: costo_reserva || 0.00,
+      reglas,
       imagen_url
     });
 
@@ -91,13 +97,16 @@ exports.updateAmenity = async (req, res) => {
     const {
       nombre,
       descripcion,
+      tipo,
       ubicacion,
-      capacidad,
-      disponibilidad,
-      horario_apertura,
-      horario_cierre,
-      requiere_reserva,
-      costo_uso,
+      capacidad_maxima, // Campo corregido
+      estado,
+      horario_inicio, // Campo corregido
+      horario_fin, // Campo corregido
+      disponible_reserva, // Campo correcto
+      requiere_aprobacion, // Campo correcto
+      costo_reserva, // Campo corregido
+      reglas,
       imagen_url
     } = req.body;
 
@@ -109,13 +118,16 @@ exports.updateAmenity = async (req, res) => {
     await amenity.update({
       nombre: nombre || amenity.nombre,
       descripcion: descripcion || amenity.descripcion,
+      tipo: tipo || amenity.tipo,
       ubicacion: ubicacion || amenity.ubicacion,
-      capacidad: capacidad !== undefined ? capacidad : amenity.capacidad,
-      disponibilidad: disponibilidad || amenity.disponibilidad,
-      horario_apertura: horario_apertura || amenity.horario_apertura,
-      horario_cierre: horario_cierre || amenity.horario_cierre,
-      requiere_reserva: requiere_reserva !== undefined ? requiere_reserva : amenity.requiere_reserva,
-      costo_uso: costo_uso !== undefined ? costo_uso : amenity.costo_uso,
+      capacidad_maxima: capacidad_maxima !== undefined ? capacidad_maxima : amenity.capacidad_maxima,
+      estado: estado || amenity.estado,
+      horario_inicio: horario_inicio || amenity.horario_inicio,
+      horario_fin: horario_fin || amenity.horario_fin,
+      disponible_reserva: disponible_reserva !== undefined ? disponible_reserva : amenity.disponible_reserva,
+      requiere_aprobacion: requiere_aprobacion !== undefined ? requiere_aprobacion : amenity.requiere_aprobacion,
+      costo_reserva: costo_reserva !== undefined ? costo_reserva : amenity.costo_reserva,
+      reglas: reglas || amenity.reglas,
       imagen_url: imagen_url || amenity.imagen_url
     });
 
@@ -126,6 +138,33 @@ exports.updateAmenity = async (req, res) => {
   } catch (error) {
     console.error('Error al actualizar amenidad:', error);
     res.status(500).json({ message: 'Error al actualizar amenidad', error: error.message });
+  }
+};
+
+// Implementación del método faltante en rutas
+exports.updateAmenityAvailability = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    if (!['Disponible', 'Ocupada', 'Mantenimiento', 'Fuera de Servicio'].includes(estado)) {
+      return res.status(400).json({ message: 'Estado de amenidad inválido' });
+    }
+    
+    const amenity = await Amenity.findByPk(id);
+    if (!amenity) {
+      return res.status(404).json({ message: 'Amenidad no encontrada' });
+    }
+
+    await amenity.update({ estado });
+
+    res.json({
+      message: 'Estado de amenidad actualizado exitosamente',
+      amenity
+    });
+  } catch (error) {
+    console.error('Error al actualizar estado de amenidad:', error);
+    res.status(500).json({ message: 'Error al actualizar estado de amenidad', error: error.message });
   }
 };
 
@@ -147,7 +186,7 @@ exports.deleteAmenity = async (req, res) => {
   }
 };
 
-// ===== RESERVAS DE AMENIDADES =====
+// ===== RESERVAS DE AMENIDADES (Lógica de Reserva Corregida) =====
 
 // Obtener todas las reservas
 exports.getAllReservations = async (req, res) => {
@@ -165,7 +204,7 @@ exports.getAllReservations = async (req, res) => {
       include: [
         {
           model: Amenity,
-          attributes: ['id', 'nombre', 'ubicacion', 'costo_uso']
+          attributes: ['id', 'nombre', 'ubicacion', 'costo_reserva'] // Campo corregido
         },
         {
           model: User,
@@ -207,9 +246,9 @@ exports.createReservation = async (req, res) => {
       return res.status(404).json({ message: 'Amenidad no encontrada' });
     }
 
-    // Verificar si requiere reserva
-    if (!amenity.requiere_reserva) {
-      return res.status(400).json({ message: 'Esta amenidad no requiere reserva' });
+    // Verificar si requiere reserva (Usando el campo correcto del modelo Amenity.js)
+    if (!amenity.disponible_reserva) { 
+      return res.status(400).json({ message: 'Esta amenidad no está disponible para reserva' });
     }
 
     // Verificar disponibilidad (no debe haber otra reserva confirmada en el mismo horario)
@@ -249,14 +288,15 @@ exports.createReservation = async (req, res) => {
       hora_inicio,
       hora_fin,
       motivo,
-      estado: 'Pendiente'
+      // Lógica de estado inicial: Pendiente si requiere aprobación, Confirmada si no.
+      estado: amenity.requiere_aprobacion ? 'Pendiente' : 'Confirmada' 
     });
 
     const reservationWithDetails = await AmenityReservation.findByPk(reservation.id, {
       include: [
         {
           model: Amenity,
-          attributes: ['id', 'nombre', 'ubicacion', 'costo_uso']
+          attributes: ['id', 'nombre', 'ubicacion', 'costo_reserva'] // Campo corregido
         },
         {
           model: User,

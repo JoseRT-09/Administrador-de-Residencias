@@ -1,4 +1,12 @@
-import { User } from './user.model';
+// Enums
+export enum ActivityType {
+  REUNION = 'Reunión',
+  EVENTO = 'Evento',
+  MANTENIMIENTO = 'Mantenimiento',
+  ASAMBLEA = 'Asamblea',
+  CELEBRACION = 'Celebración',
+  OTRO = 'Otro'
+}
 
 export enum ActivityStatus {
   PROGRAMADA = 'Programada',
@@ -6,37 +14,50 @@ export enum ActivityStatus {
   COMPLETADA = 'Completada',
   CANCELADA = 'Cancelada'
 }
-
 export interface Activity {
   id: number;
-  nombre: string;
-  descripcion?: string;
-  fecha_hora: Date | string;
-  ubicacion?: string;
-  organizador_id?: number;
-  cupo_maximo?: number;
-  inscritos_count: number;
+  titulo: string;
+  descripcion: string;
+  tipo: ActivityType;
+  fecha_inicio: Date | string;
+  fecha_fin?: Date | string;
+  ubicacion: string;
+  organizador_id: number;
+  organizador?: {
+    id: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    telefono?: string;
+  };
+  max_participantes?: number;
   estado: ActivityStatus;
-  created_at?: Date;
-  updated_at?: Date;
-  
-  // Relaciones
-  organizador?: User;
+  notas?: string;
+  created_at: Date | string;
+  updated_at: Date | string;
 }
-
 export interface CreateActivityDto {
-  nombre: string;
-  descripcion?: string;
-  fecha_hora: Date | string;
-  ubicacion?: string;
-  cupo_maximo?: number;
+  titulo: string;
+  descripcion: string;
+  tipo: ActivityType;
+  fecha_inicio: Date | string;
+  fecha_fin?: Date | string;
+  ubicacion: string;
+  organizador_id: number;
+  max_participantes?: number;
+  estado: ActivityStatus;
+  notas?: string;
 }
 
 export interface UpdateActivityDto {
-  nombre?: string;
+  titulo?: string;
   descripcion?: string;
-  fecha_hora?: Date | string;
+  tipo?: ActivityType;
+  fecha_inicio?: Date | string;
+  fecha_fin?: Date | string;
   ubicacion?: string;
-  cupo_maximo?: number;
+  organizador_id?: number;
+  max_participantes?: number;
   estado?: ActivityStatus;
+  notas?: string;
 }

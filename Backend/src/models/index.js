@@ -1,3 +1,4 @@
+// Backend/src/models/index.js (VERSIÓN FINAL CON CORRECCIONES PREVIAS Y DE CLAVE)
 const sequelize = require('../config/database');
 const User = require('./User');
 const Residence = require('./Residence');
@@ -30,21 +31,19 @@ Payment.belongsTo(ServiceCost, { as: 'servicioCosto', foreignKey: 'servicio_cost
 User.hasMany(Payment, { foreignKey: 'residente_id' });
 ServiceCost.hasMany(Payment, { foreignKey: 'servicio_costo_id' });
 
-// Relaciones Report
+// Relaciones Report 
 Report.belongsTo(Residence, { foreignKey: 'residencia_id' });
-Report.belongsTo(User, { as: 'reportadoPor', foreignKey: 'reportado_por' });
+Report.belongsTo(User, { as: 'reportadoPor', foreignKey: 'reportado_por_id' }); 
 Report.belongsTo(User, { as: 'asignadoA', foreignKey: 'asignado_a' });
 
 Residence.hasMany(Report, { foreignKey: 'residencia_id' });
-User.hasMany(Report, { as: 'reportesCreados', foreignKey: 'reportado_por' });
+User.hasMany(Report, { as: 'reportesCreados', foreignKey: 'reportado_por_id' }); 
 User.hasMany(Report, { as: 'reportesAsignados', foreignKey: 'asignado_a' });
 
-// Relaciones Complaint
-Complaint.belongsTo(User, { as: 'autor', foreignKey: 'autor_id' });
-Complaint.belongsTo(User, { as: 'residenteObjetivo', foreignKey: 'residente_objetivo_id' });
-
-User.hasMany(Complaint, { as: 'quejasCreadas', foreignKey: 'autor_id' });
-User.hasMany(Complaint, { as: 'quejasRecibidas', foreignKey: 'residente_objetivo_id' });
+// Relaciones Complaint 
+Complaint.belongsTo(User, { as: 'usuario', foreignKey: 'usuario_id' }); 
+Complaint.belongsTo(Residence, { as: 'residencia', foreignKey: 'residenciclsa_id' }); 
+User.hasMany(Complaint, { as: 'quejasCreadas', foreignKey: 'usuario_id' }); 
 
 // Relaciones Activity
 Activity.belongsTo(User, { as: 'organizador', foreignKey: 'organizador_id' });
@@ -66,7 +65,7 @@ ReassignmentHistory.belongsTo(User, { as: 'autorizadoPor', foreignKey: 'autoriza
 Residence.hasMany(ReassignmentHistory, { foreignKey: 'residencia_id' });
 
 module.exports = {
-  sequelize,
+  sequelize, // EXPORTADO
   User,
   Residence,
   ServiceCost,

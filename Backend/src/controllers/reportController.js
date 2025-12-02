@@ -1,5 +1,7 @@
+// Backend/src/controllers/reportController.js (CORREGIDO)
 const { Report, Residence, User } = require('../models');
 const { ESTADOS_REPORTE, TIPOS_REPORTE, PRIORIDADES } = require('../config/constants');
+const { Op, fn, col } = require('sequelize'); // Import Op, fn, col for safety
 
 // Obtener todos los reportes
 exports.getAllReports = async (req, res) => {
@@ -99,7 +101,7 @@ exports.createReport = async (req, res) => {
     const report = await Report.create({
       tipo,
       residencia_id,
-      reportado_por: req.user.id,
+      reportado_por_id: req.user.id, // CORREGIDO
       titulo,
       descripcion,
       prioridad: prioridad || PRIORIDADES.MEDIA,
@@ -232,7 +234,7 @@ exports.getReportsByUser = async (req, res) => {
     const { user_id } = req.params;
 
     const reports = await Report.findAll({
-      where: { reportado_por: user_id },
+      where: { reportado_por_id: user_id }, // CORREGIDO
       include: [
         {
           model: Residence,
@@ -269,7 +271,7 @@ exports.getReportsStatistics = async (req, res) => {
     const reportsByType = await Report.findAll({
       attributes: [
         'tipo',
-        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        [fn('COUNT', col('id')), 'count']
       ],
       group: ['tipo'],
       raw: true

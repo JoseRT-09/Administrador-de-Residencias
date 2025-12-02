@@ -73,7 +73,8 @@ export class AmenityBookingComponent implements OnInit {
       next: (amenity) => {
         this.amenity = amenity;
         
-        if (!amenity.disponible_reserva) {
+        const disponible = amenity.disponible_reserva ?? amenity.requiere_reserva;
+        if (!disponible) {
           this.notificationService.warning('Esta amenidad no está disponible para reservas');
           this.router.navigate(['/amenities', this.amenityId]);
         }
@@ -115,6 +116,11 @@ export class AmenityBookingComponent implements OnInit {
 
   onCancel(): void {
     this.router.navigate(['/amenities', this.amenityId]);
+  }
+
+  getCosto(): number {
+    if (!this.amenity) return 0;
+    return this.amenity.costo_reserva ?? this.amenity.costo_uso ?? 0;
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {

@@ -1,3 +1,4 @@
+// Backend/src/models/Complaint.js (CORREGIDO)
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -7,46 +8,90 @@ const Complaint = sequelize.define('Complaint', {
     primaryKey: true,
     autoIncrement: true
   },
-  autor_id: {
+  asunto: {
+    type: DataTypes.STRING(150),
+    allowNull: false,
+    validate: {
+      notEmpty: true,
+      len: [5, 150]
+    }
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    validate: {
+      notEmpty: true,
+      len: [20, 5000]
+    }
+  },
+  categoria: {
+    type: DataTypes.ENUM(
+      'Ruido',
+      'Convivencia',
+      'Mascotas',
+      'Estacionamiento',
+      'Áreas Comunes',
+      'Limpieza',
+      'Seguridad',
+      'Mantenimiento',
+      'Administración',
+      'Otro'
+    ),
+    allowNull: false,
+    defaultValue: 'Otro'
+  },
+  prioridad: {
+    type: DataTypes.ENUM(
+      'Baja',
+      'Media',
+      'Alta',
+      'Urgente'
+    ),
+    allowNull: false,
+    defaultValue: 'Media'
+  },
+  estado: {
+    type: DataTypes.ENUM(
+      'Nueva',
+      'En Revisión',
+      'En Proceso',
+      'Resuelta',
+      'Cerrada',
+      'Rechazada'
+    ),
+    allowNull: false,
+    defaultValue: 'Nueva'
+  },
+  usuario_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'users',
+      model: 'Users',
       key: 'id'
     }
   },
-  asunto: {
-    type: DataTypes.STRING(200),
-    allowNull: false
-  },
-  dirigido_a: {
-    type: DataTypes.ENUM('Administración', 'Residente', 'Mantenimiento')
-  },
-  residente_objetivo_id: {
+  residencia_id: {
     type: DataTypes.INTEGER,
+    allowNull: true,
     references: {
-      model: 'users',
+      model: 'Residences',
       key: 'id'
     }
   },
-  cuerpo_mensaje: {
-    type: DataTypes.TEXT,
-    allowNull: false
+  fecha_queja: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   },
-  es_anonimo: {
+  es_anonima: {
     type: DataTypes.BOOLEAN,
+    allowNull: false,
     defaultValue: false
-  },
-  estado: {
-    type: DataTypes.ENUM('Nuevo', 'Revisado', 'En Proceso', 'Resuelto'),
-    defaultValue: 'Nuevo'
-  },
-  respuesta: {
-    type: DataTypes.TEXT
   }
 }, {
   tableName: 'complaints',
   timestamps: true,
+  underscored: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 });

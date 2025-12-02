@@ -157,24 +157,24 @@ export class ReportDetailComponent implements OnInit {
 
   getTypeClass(type: ReportType): string {
     const typeMap: Record<ReportType, string> = {
-      [ReportType.MANTENIMIENTO]: 'type-maintenance',
-      [ReportType.LIMPIEZA]: 'type-cleaning',
-      [ReportType.SEGURIDAD]: 'type-security',
-      [ReportType.INSTALACIONES]: 'type-facilities',
+      [ReportType.INCENDIO]: 'type-fire',
+      [ReportType.ELECTRICO]: 'type-electric',
+      [ReportType.AGUA]: 'type-water',
+      [ReportType.ROBO]: 'type-theft',
       [ReportType.OTRO]: 'type-other'
     };
-    return typeMap[type];
+    return typeMap[type] || 'type-other';
   }
 
   getTypeIcon(type: ReportType): string {
     const iconMap: Record<ReportType, string> = {
-      [ReportType.MANTENIMIENTO]: 'build',
-      [ReportType.LIMPIEZA]: 'cleaning_services',
-      [ReportType.SEGURIDAD]: 'security',
-      [ReportType.INSTALACIONES]: 'apartment',
+      [ReportType.INCENDIO]: 'local_fire_department',
+      [ReportType.ELECTRICO]: 'flash_on',
+      [ReportType.AGUA]: 'water_drop',
+      [ReportType.ROBO]: 'security',
       [ReportType.OTRO]: 'help_outline'
     };
-    return iconMap[type];
+    return iconMap[type] || 'help_outline';
   }
 
   getStatusClass(status: ReportStatus): string {
@@ -218,8 +218,8 @@ export class ReportDetailComponent implements OnInit {
   }
 
   getReporterName(): string {
-    if (!this.report?.reportado_por) return 'Usuario desconocido';
-    return `${this.report.reportado_por.nombre} ${this.report.reportado_por.apellido}`;
+    if (!this.report?.reportadoPor) return 'Usuario desconocido';
+    return `${this.report.reportadoPor.nombre} ${this.report.reportadoPor.apellido}`;
   }
 
   getUserInitials(firstName: string, lastName: string): string {
@@ -232,7 +232,7 @@ export class ReportDetailComponent implements OnInit {
     
     if (this.authService.isAdmin()) return true;
     
-    return this.report.reportado_por?.id === currentUser.id && 
+    return this.report.reportado_por === currentUser.id && 
            this.report.estado === ReportStatus.ABIERTO;
   }
 
@@ -242,5 +242,15 @@ export class ReportDetailComponent implements OnInit {
 
   printReport(): void {
     window.print();
+  }
+
+  // Helper para obtener fecha de creación
+  getCreatedDate(): Date | string {
+    return this.report?.created_at || new Date();
+  }
+
+  // Helper para obtener residencia
+  getResidence() {
+    return this.report?.Residence || this.report?.residencia;
   }
 }

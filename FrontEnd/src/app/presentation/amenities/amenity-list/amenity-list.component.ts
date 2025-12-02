@@ -16,12 +16,14 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatDividerModule } from '@angular/material/divider';
 import { GetAllAmenitiesUseCase } from '../../../domain/use-cases/amenity/get-all-amenities.usecase';
 import { DeleteAmenityUseCase } from '../../../domain/use-cases/amenity/delete-amenity.usecase';
 import { UpdateAmenityUseCase } from '../../../domain/use-cases/amenity/update-amenity.usecase';
 import { Amenity, AmenityType, AmenityStatus } from '../../../domain/models/amenity.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { FilterPipe } from '../../../shared/pipes/filter.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
@@ -44,7 +46,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatMenuModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    MatDividerModule,
+    FilterPipe
   ],
   templateUrl: './amenity-list.component.html',
   styleUrls: ['./amenity-list.component.scss']
@@ -175,7 +179,9 @@ export class AmenityListComponent implements OnInit {
   toggleAvailability(amenity: Amenity, event: any): void {
     event.stopPropagation();
     
-    const newStatus = !amenity.disponible_reserva;
+    const currentStatus = amenity.disponible_reserva ?? amenity.requiere_reserva;
+    const newStatus = !currentStatus;
+    
     this.updateAmenity.execute(amenity.id, { disponible_reserva: newStatus }).subscribe({
       next: () => {
         this.notificationService.success(
@@ -254,6 +260,6 @@ export class AmenityListComponent implements OnInit {
   }
 
   getBookableCount(): number {
-    return this.dataSource.data.filter(a => a.disponible_reserva).length;
+    return this.dataSource.data.filter(a => a.disponible_reserva ?? a.requiere_reserva).length;
   }
 }

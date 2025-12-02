@@ -1,5 +1,7 @@
-const { Payment, ServiceCost, User, Residence } = require('../models');
+// Backend/src/controllers/paymentController.js (CORREGIDO FINAL)
+const { Payment, ServiceCost, User, Residence, sequelize } = require('../models'); // CORREGIDO: Se añade 'sequelize'
 const { ESTADOS_COSTO } = require('../config/constants');
+const { Op } = require('sequelize'); // Importar Op para consistencia
 
 // Obtener todos los pagos
 exports.getAllPayments = async (req, res) => {
@@ -179,16 +181,16 @@ exports.getPaymentsSummary = async (req, res) => {
 
     const payments = await Payment.findAll({
       attributes: [
-        [sequelize.fn('EXTRACT', sequelize.literal("MONTH FROM fecha_pago")), 'month'],
+        [sequelize.fn('EXTRACT', sequelize.literal("MONTH FROM \"fecha_pago\"")), 'month'],
         [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
         [sequelize.fn('SUM', sequelize.col('monto_pagado')), 'total']
       ],
       where: sequelize.where(
-        sequelize.fn('EXTRACT', sequelize.literal("YEAR FROM fecha_pago")),
+        sequelize.fn('EXTRACT', sequelize.literal("YEAR FROM \"fecha_pago\"")),
         currentYear
       ),
-      group: [sequelize.fn('EXTRACT', sequelize.literal("MONTH FROM fecha_pago"))],
-      order: [[sequelize.fn('EXTRACT', sequelize.literal("MONTH FROM fecha_pago")), 'ASC']],
+      group: [sequelize.fn('EXTRACT', sequelize.literal("MONTH FROM \"fecha_pago\""))],
+      order: [[sequelize.fn('EXTRACT', sequelize.literal("MONTH FROM \"fecha_pago\"")), 'ASC']],
       raw: true
     });
 

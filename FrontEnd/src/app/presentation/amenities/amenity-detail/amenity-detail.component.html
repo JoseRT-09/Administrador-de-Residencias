@@ -19,7 +19,7 @@
           mat-raised-button 
           color="primary"
           (click)="onBooking()"
-          [disabled]="!amenity.disponible_reserva"
+          [disabled]="!(amenity.disponible_reserva ?? amenity.requiere_reserva)"
         >
           <mat-icon>event_available</mat-icon>
           Reservar
@@ -83,10 +83,10 @@
         </div>
 
         <div class="status-section">
-          <mat-chip class="status-chip" [class.available]="amenity.estado === 'Disponible'"
-            [class.occupied]="amenity.estado === 'Ocupada'"
-            [class.maintenance]="amenity.estado === 'Mantenimiento'"
-            [class.out]="amenity.estado === 'Fuera de Servicio'">
+          <mat-chip class="status-chip" [class.available]="amenity.estado === AmenityStatus.DISPONIBLE"
+            [class.occupied]="amenity.estado === AmenityStatus.OCUPADA"
+            [class.maintenance]="amenity.estado === AmenityStatus.MANTENIMIENTO"
+            [class.out]="amenity.estado === AmenityStatus.FUERA_SERVICIO">
             {{ amenity.estado }}
           </mat-chip>
           <mat-chip class="type-chip">
@@ -117,8 +117,8 @@
             Capacidad
           </h4>
           <div class="detail-value">
-            <span class="value-large">{{ amenity.capacidad_maxima || '∞' }}</span>
-            <span class="value-label">{{ amenity.capacidad_maxima ? 'Personas' : 'Sin límite' }}</span>
+            <span class="value-large">{{ amenity.capacidad_maxima || amenity.capacidad || '∞' }}</span>
+            <span class="value-label">{{ (amenity.capacidad_maxima || amenity.capacidad) ? 'Personas' : 'Sin límite' }}</span>
           </div>
         </div>
 
@@ -128,11 +128,11 @@
             <mat-icon>schedule</mat-icon>
             Horario
           </h4>
-          <div class="detail-value" *ngIf="amenity.horario_inicio && amenity.horario_fin">
-            <span class="value-large">{{ amenity.horario_inicio }} - {{ amenity.horario_fin }}</span>
+          <div class="detail-value" *ngIf="(amenity.horario_inicio || amenity.horario_apertura) && (amenity.horario_fin || amenity.horario_cierre)">
+            <span class="value-large">{{ amenity.horario_inicio || amenity.horario_apertura }} - {{ amenity.horario_fin || amenity.horario_cierre }}</span>
             <span class="value-label">Horario de operación</span>
           </div>
-          <div class="detail-value" *ngIf="!amenity.horario_inicio">
+          <div class="detail-value" *ngIf="!(amenity.horario_inicio || amenity.horario_apertura)">
             <span class="value-large">24/7</span>
             <span class="value-label">Disponible todo el día</span>
           </div>
@@ -145,9 +145,9 @@
             Costo de Reserva
           </h4>
           <div class="detail-value">
-            <span class="value-large" *ngIf="amenity.costo_reserva > 0">${{ amenity.costo_reserva | number:'1.2-2' }}</span>
-            <span class="value-large free" *ngIf="amenity.costo_reserva === 0">Gratis</span>
-            <span class="value-label">{{ amenity.costo_reserva > 0 ? 'MXN por reserva' : 'Sin costo' }}</span>
+            <span class="value-large" *ngIf="(amenity.costo_reserva ?? amenity.costo_uso) > 0">${{ amenity.costo_reserva ?? amenity.costo_uso | number:'1.2-2' }}</span>
+            <span class="value-large free" *ngIf="(amenity.costo_reserva ?? amenity.costo_uso) === 0">Gratis</span>
+            <span class="value-label">{{ (amenity.costo_reserva ?? amenity.costo_uso) > 0 ? 'MXN por reserva' : 'Sin costo' }}</span>
           </div>
         </div>
 
@@ -159,10 +159,10 @@
           </h4>
           <div class="settings-list">
             <div class="setting-item">
-              <mat-icon [class.active]="amenity.disponible_reserva">
-                {{ amenity.disponible_reserva ? 'check_circle' : 'cancel' }}
+              <mat-icon [class.active]="amenity.disponible_reserva ?? amenity.requiere_reserva">
+                {{ (amenity.disponible_reserva ?? amenity.requiere_reserva) ? 'check_circle' : 'cancel' }}
               </mat-icon>
-              <span>{{ amenity.disponible_reserva ? 'Reservas habilitadas' : 'Reservas deshabilitadas' }}</span>
+              <span>{{ (amenity.disponible_reserva ?? amenity.requiere_reserva) ? 'Reservas habilitadas' : 'Reservas deshabilitadas' }}</span>
             </div>
             <div class="setting-item">
               <mat-icon [class.active]="amenity.requiere_aprobacion">
@@ -192,7 +192,7 @@
         Acciones Rápidas
       </h3>
       <div class="quick-actions">
-        <button mat-raised-button color="primary" (click)="onBooking()" [disabled]="!amenity.disponible_reserva">
+        <button mat-raised-button color="primary" (click)="onBooking()" [disabled]="!(amenity.disponible_reserva ?? amenity.requiere_reserva)">
           <mat-icon>event_available</mat-icon>
           Hacer Reserva
         </button>
@@ -224,7 +224,7 @@
           <span class="metadata-label">Creada:</span>
           <span class="metadata-value">{{ amenity.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
         </div>
-        <div class="metadata-item">
+        <div class="metadata-item" *ngIf="amenity.updated_at">
           <span class="metadata-label">Última Actualización:</span>
           <span class="metadata-value">{{ amenity.updated_at | date:'dd/MM/yyyy HH:mm' }}</span>
         </div>

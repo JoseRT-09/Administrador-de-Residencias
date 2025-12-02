@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -17,11 +17,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDividerModule } from '@angular/material/divider';
 import { GetAllPaymentsUseCase } from '../../../domain/use-cases/payment/get-all-payments.usecase';
 import { DeletePaymentUseCase } from '../../../domain/use-cases/payment/delete-payment.usecase';
 import { Payment, PaymentMethod, PaymentStatus } from '../../../domain/models/payment.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { FilterPipe } from '../../../shared/pipes/filter.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
@@ -45,7 +47,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatDividerModule,
+    FilterPipe
   ],
   templateUrl: './payment-list.component.html',
   styleUrls: ['./payment-list.component.scss']
@@ -56,6 +60,7 @@ export class PaymentListComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -134,6 +139,7 @@ export class PaymentListComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
+        console.error('Error al cargar pagos:', error);
         this.notificationService.error('Error al cargar pagos');
         this.isLoading = false;
       }
@@ -157,13 +163,14 @@ export class PaymentListComponent implements OnInit {
   }
 
   onDelete(payment: Payment): void {
-    if (confirm(`¿Estás seguro de eliminar este pago?\n\nMonto: $${payment.monto}`)) {
+    if (confirm(`¿Estás seguro de eliminar este pago?\n\nMonto: $${payment.monto || payment.monto_pagado}`)) {
       this.deletePayment.execute(payment.id).subscribe({
         next: () => {
           this.notificationService.success('Pago eliminado correctamente');
           this.loadPayments();
         },
-        error: () => {
+        error: (error) => {
+          console.error('Error al eliminar pago:', error);
           this.notificationService.error('Error al eliminar pago');
         }
       });
@@ -199,18 +206,25 @@ export class PaymentListComponent implements OnInit {
   }
 
   getTotalAmount(): number {
-    return this.dataSource.data.reduce((sum, payment) => sum + payment.monto, 0);
+    return this.dataSource.data.reduce((sum, payment) => {
+      const monto = payment.monto || payment.monto_pagado || 0;
+      return sum + Number(monto);
+    }, 0);
   }
 
   getCompletedAmount(): number {
     return this.dataSource.data
       .filter(payment => payment.estado === PaymentStatus.COMPLETADO)
-      .reduce((sum, payment) => sum + payment.monto, 0);
+      .reduce((sum, payment) => {
+        const monto = payment.monto || payment.monto_pagado || 0;
+        return sum + Number(monto);
+      }, 0);
   }
 
   getUserName(payment: Payment): string {
-    if (payment.usuario) {
-      return `${payment.usuario.nombre} ${payment.usuario.apellido}`;
+    const user = payment.usuario || payment.residente;
+    if (user) {
+      return `${user.nombre} ${user.apellido}`;
     }
     return 'Usuario desconocido';
   }
@@ -232,6 +246,4 @@ export class PaymentListComponent implements OnInit {
       queryParams: { print: true } 
     });
   }
-
-  private router = inject(RouterModule) as any;
 }

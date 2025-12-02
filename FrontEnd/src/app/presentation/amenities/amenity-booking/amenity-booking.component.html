@@ -32,7 +32,7 @@
         </div>
         <div class="amenity-details">
           <h2>{{ amenity.nombre }}</h2>
-          <p class="amenity-location">
+          <p class="amenity-location" *ngIf="amenity.ubicacion">
             <mat-icon>location_on</mat-icon>
             {{ amenity.ubicacion }}
           </p>
@@ -47,15 +47,15 @@
           <mat-icon>people</mat-icon>
           <div>
             <span class="spec-label">Capacidad Máxima</span>
-            <span class="spec-value">{{ amenity.capacidad_maxima || 'Sin límite' }}</span>
+            <span class="spec-value">{{ amenity.capacidad_maxima || amenity.capacidad || 'Sin límite' }}</span>
           </div>
         </div>
 
-        <div class="spec-item" *ngIf="amenity.horario_inicio && amenity.horario_fin">
+        <div class="spec-item" *ngIf="(amenity.horario_inicio || amenity.horario_apertura) && (amenity.horario_fin || amenity.horario_cierre)">
           <mat-icon>schedule</mat-icon>
           <div>
             <span class="spec-label">Horario</span>
-            <span class="spec-value">{{ amenity.horario_inicio }} - {{ amenity.horario_fin }}</span>
+            <span class="spec-value">{{ amenity.horario_inicio || amenity.horario_apertura }} - {{ amenity.horario_fin || amenity.horario_cierre }}</span>
           </div>
         </div>
 
@@ -63,8 +63,8 @@
           <mat-icon>attach_money</mat-icon>
           <div>
             <span class="spec-label">Costo</span>
-            <span class="spec-value" *ngIf="amenity.costo_reserva > 0">${{ amenity.costo_reserva | number:'1.2-2' }} MXN</span>
-            <span class="spec-value free" *ngIf="amenity.costo_reserva === 0">Gratis</span>
+            <span class="spec-value" *ngIf="getCosto() > 0">${{ getCosto() | number:'1.2-2' }} MXN</span>
+            <span class="spec-value free" *ngIf="getCosto() === 0">Gratis</span>
           </div>
         </div>
 
@@ -124,9 +124,9 @@
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Número de Personas</mat-label>
             <input matInput type="number" formControlName="num_personas" min="1" 
-              [max]="amenity.capacidad_maxima || 999">
+              [max]="amenity.capacidad_maxima || amenity.capacidad || 999">
             <mat-icon matPrefix>people</mat-icon>
-            <mat-hint>Máximo: {{ amenity.capacidad_maxima || 'Sin límite' }}</mat-hint>
+            <mat-hint>Máximo: {{ amenity.capacidad_maxima || amenity.capacidad || 'Sin límite' }}</mat-hint>
             <mat-error *ngIf="bookingForm.get('num_personas')?.invalid">
               {{ getErrorMessage('num_personas') }}
             </mat-error>
@@ -184,9 +184,9 @@
               <span class="summary-label">Personas:</span>
               <span class="summary-value">{{ bookingForm.get('num_personas')?.value }}</span>
             </div>
-            <div class="summary-item total" *ngIf="amenity.costo_reserva > 0">
+            <div class="summary-item total" *ngIf="getCosto() > 0">
               <span class="summary-label">Total a Pagar:</span>
-              <span class="summary-value price">${{ amenity.costo_reserva | number:'1.2-2' }} MXN</span>
+              <span class="summary-value price">${{ getCosto() | number:'1.2-2' }} MXN</span>
             </div>
           </div>
         </div>

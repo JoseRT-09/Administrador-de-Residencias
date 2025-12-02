@@ -31,29 +31,21 @@
         </button>
 
         <mat-menu #statusMenu="matMenu">
-          <button mat-menu-item (click)="changeStatus('Nueva')">
+          <button mat-menu-item (click)="changeStatus(ComplaintStatus.NUEVO)">
             <mat-icon>fiber_new</mat-icon>
-            <span>Nueva</span>
+            <span>Nuevo</span>
           </button>
-          <button mat-menu-item (click)="changeStatus('En Revisión')">
+          <button mat-menu-item (click)="changeStatus(ComplaintStatus.REVISADO)">
             <mat-icon>rate_review</mat-icon>
-            <span>En Revisión</span>
+            <span>Revisado</span>
           </button>
-          <button mat-menu-item (click)="changeStatus('En Proceso')">
+          <button mat-menu-item (click)="changeStatus(ComplaintStatus.EN_PROCESO)">
             <mat-icon>sync</mat-icon>
             <span>En Proceso</span>
           </button>
-          <button mat-menu-item (click)="changeStatus('Resuelta')">
+          <button mat-menu-item (click)="changeStatus(ComplaintStatus.RESUELTO)">
             <mat-icon>check_circle</mat-icon>
-            <span>Resuelta</span>
-          </button>
-          <button mat-menu-item (click)="changeStatus('Cerrada')">
-            <mat-icon>archive</mat-icon>
-            <span>Cerrada</span>
-          </button>
-          <button mat-menu-item (click)="changeStatus('Rechazada')">
-            <mat-icon>cancel</mat-icon>
-            <span>Rechazada</span>
+            <span>Resuelto</span>
           </button>
         </mat-menu>
 
@@ -140,7 +132,7 @@
           <mat-icon>description</mat-icon>
           Descripción
         </h3>
-        <p>{{ complaint.descripcion }}</p>
+        <p>{{ complaint.descripcion || complaint.cuerpo_mensaje }}</p>
       </div>
 
       <mat-divider></mat-divider>
@@ -159,12 +151,12 @@
             </div>
             <div class="user-details">
               <span class="user-name">{{ getUserName() }}</span>
-              <span class="user-email" *ngIf="complaint.usuario && !complaint.es_anonima">
-                {{ complaint.usuario.email }}
+              <span class="user-email" *ngIf="(complaint.usuario || complaint.autor) && !complaint.es_anonima">
+                {{ complaint.usuario?.email || complaint.autor?.email }}
               </span>
-              <span class="user-phone" *ngIf="complaint.usuario?.telefono && !complaint.es_anonima">
+              <span class="user-phone" *ngIf="complaint.usuario?.telefono || complaint.autor?.telefono">
                 <mat-icon>phone</mat-icon>
-                {{ complaint.usuario.telefono }}
+                {{ complaint.usuario?.telefono || complaint.autor?.telefono }}
               </span>
             </div>
           </div>
@@ -181,7 +173,7 @@
             <div>
               <span class="residence-name">{{ getResidenceName() }}</span>
               <span class="residence-type" *ngIf="complaint.residencia">
-                {{ complaint.residencia.tipo_residencia }}
+                <span *ngIf="complaint.residencia.bloque">Bloque {{ complaint.residencia.bloque }}</span>
               </span>
             </div>
           </div>

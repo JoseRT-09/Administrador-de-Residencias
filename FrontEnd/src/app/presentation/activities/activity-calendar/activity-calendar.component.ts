@@ -10,6 +10,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { GetAllActivitiesUseCase } from '../../../domain/use-cases/activity/get-all-activities.usecase';
 import { Activity, ActivityType, ActivityStatus } from '../../../domain/models/activity.model';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -35,7 +37,9 @@ interface CalendarDay {
     MatMenuModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatDividerModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './activity-calendar.component.html',
   styleUrls: ['./activity-calendar.component.scss']
@@ -43,6 +47,10 @@ interface CalendarDay {
 export class ActivityCalendarComponent implements OnInit {
   private getAllActivities = inject(GetAllActivitiesUseCase);
   private notificationService = inject(NotificationService);
+
+  // Exponer enums al template
+  ActivityType = ActivityType;
+  ActivityStatus = ActivityStatus;
 
   currentDate = new Date();
   currentMonth: Date;
@@ -55,8 +63,11 @@ export class ActivityCalendarComponent implements OnInit {
 
   viewMode: 'month' | 'week' | 'day' = 'month';
 
-  ngOnInit(): void {
+  constructor() {
     this.currentMonth = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+  }
+
+  ngOnInit(): void {
     this.loadActivities();
   }
 

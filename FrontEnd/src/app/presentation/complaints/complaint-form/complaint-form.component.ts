@@ -74,12 +74,10 @@ export class ComplaintFormComponent implements OnInit {
   ];
 
   estados = [
-    { value: ComplaintStatus.NUEVA, label: 'Nueva', icon: 'fiber_new' },
-    { value: ComplaintStatus.EN_REVISION, label: 'En Revisión', icon: 'rate_review' },
+    { value: ComplaintStatus.NUEVO, label: 'Nuevo', icon: 'fiber_new' },
+    { value: ComplaintStatus.REVISADO, label: 'Revisado', icon: 'rate_review' },
     { value: ComplaintStatus.EN_PROCESO, label: 'En Proceso', icon: 'sync' },
-    { value: ComplaintStatus.RESUELTA, label: 'Resuelta', icon: 'check_circle' },
-    { value: ComplaintStatus.CERRADA, label: 'Cerrada', icon: 'archive' },
-    { value: ComplaintStatus.RECHAZADA, label: 'Rechazada', icon: 'cancel' }
+    { value: ComplaintStatus.RESUELTO, label: 'Resuelto', icon: 'check_circle' }
   ];
 
   ngOnInit(): void {
@@ -96,7 +94,7 @@ export class ComplaintFormComponent implements OnInit {
       descripcion: ['', [Validators.required, Validators.minLength(20)]],
       categoria: [ComplaintCategory.OTRO, [Validators.required]],
       prioridad: [ComplaintPriority.MEDIA, [Validators.required]],
-      estado: [ComplaintStatus.NUEVA, [Validators.required]],
+      estado: [ComplaintStatus.NUEVO, [Validators.required]],
       usuario_id: [currentUser?.id, [Validators.required]],
       residencia_id: [null],
       fecha_queja: [new Date(), [Validators.required]],
@@ -125,32 +123,32 @@ export class ComplaintFormComponent implements OnInit {
     }
   }
 
-  loadComplaint(): void {
-    if (!this.complaintId) return;
+loadComplaint(): void {
+  if (!this.complaintId) return;
 
-    this.isLoading = true;
-    this.getComplaintById.execute(this.complaintId).subscribe({
-      next: (complaint) => {
-        this.complaintForm.patchValue({
-          asunto: complaint.asunto,
-          descripcion: complaint.descripcion,
-          categoria: complaint.categoria,
-          prioridad: complaint.prioridad,
-          estado: complaint.estado,
-          usuario_id: complaint.usuario_id,
-          residencia_id: complaint.residencia_id,
-          fecha_queja: new Date(complaint.fecha_queja),
-          es_anonima: complaint.es_anonima
-        });
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.notificationService.error('Error al cargar queja');
-        this.router.navigate(['/complaints']);
-        this.isLoading = false;
-      }
-    });
-  }
+  this.isLoading = true;
+  this.getComplaintById.execute(this.complaintId).subscribe({
+    next: (complaint) => {
+      this.complaintForm.patchValue({
+        asunto: complaint.asunto,
+        descripcion: complaint.cuerpo_mensaje || complaint.descripcion,
+        categoria: complaint.categoria,
+        prioridad: complaint.prioridad,
+        estado: complaint.estado,
+        usuario_id: complaint.usuario_id || complaint.autor_id,
+        residencia_id: complaint.residencia_id,
+        fecha_queja: complaint.fecha_queja ? new Date(complaint.fecha_queja) : new Date(),
+        es_anonima: complaint.es_anonima
+      });
+      this.isLoading = false;
+    },
+    error: (error) => {
+      this.notificationService.error('Error al cargar queja');
+      this.router.navigate(['/complaints']);
+      this.isLoading = false;
+    }
+  });
+}
 
   onSubmit(): void {
     if (this.complaintForm.valid) {
@@ -162,6 +160,10 @@ export class ComplaintFormComponent implements OnInit {
         formData.fecha_queja = formData.fecha_queja.toISOString();
       }
 
+      // Asegurar compatibilidad con backend
+      formData.cuerpo_mensaje = formData.descripcion;
+      formData.autor_id = formData.usuario_id;
+
       // Convertir valores vacíos a null
       Object.keys(formData).forEach(key => {
         if (formData[key] === '' || formData[key] === undefined) {
@@ -169,8 +171,8 @@ export class ComplaintFormComponent implements OnInit {
         }
       });
 
-      const operation = this.isEditMode
-        ? this.updateComplaint.execute(this.complaintId!, formData)
+      const operation = this.isEditMode && this.complaintId
+        ? this.updateComplaint.execute(this.complaintId, formData)
         : this.createComplaint.execute(formData);
 
       operation.subscribe({
@@ -181,6 +183,7 @@ export class ComplaintFormComponent implements OnInit {
           this.router.navigate(['/complaints']);
         },
         error: (error) => {
+          console.error('Error saving complaint:', error);
           this.notificationService.error('Error al guardar queja');
           this.isSaving = false;
         },

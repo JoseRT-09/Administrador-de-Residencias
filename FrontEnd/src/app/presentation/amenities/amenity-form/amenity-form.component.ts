@@ -115,12 +115,12 @@ export class AmenityFormComponent implements OnInit {
           descripcion: amenity.descripcion,
           tipo: amenity.tipo,
           ubicacion: amenity.ubicacion,
-          capacidad_maxima: amenity.capacidad_maxima,
-          horario_inicio: amenity.horario_inicio,
-          horario_fin: amenity.horario_fin,
-          costo_reserva: amenity.costo_reserva,
+          capacidad_maxima: amenity.capacidad_maxima || amenity.capacidad,
+          horario_inicio: amenity.horario_inicio || amenity.horario_apertura,
+          horario_fin: amenity.horario_fin || amenity.horario_cierre,
+          costo_reserva: amenity.costo_reserva ?? amenity.costo_uso,
           requiere_aprobacion: amenity.requiere_aprobacion,
-          disponible_reserva: amenity.disponible_reserva,
+          disponible_reserva: amenity.disponible_reserva ?? amenity.requiere_reserva,
           estado: amenity.estado,
           reglas: amenity.reglas
         });
@@ -146,8 +146,8 @@ export class AmenityFormComponent implements OnInit {
         }
       });
 
-      const operation = this.isEditMode
-        ? this.updateAmenity.execute(this.amenityId!, formData)
+      const operation = this.isEditMode && this.amenityId
+        ? this.updateAmenity.execute(this.amenityId, formData)
         : this.createAmenity.execute(formData);
 
       operation.subscribe({

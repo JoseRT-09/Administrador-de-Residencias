@@ -47,6 +47,10 @@ export class ActivityDetailComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
 
+  // Exponer enums al template
+  ActivityType = ActivityType;
+  ActivityStatus = ActivityStatus;
+
   activity: Activity | null = null;
   isLoading = true;
   activityId!: number;

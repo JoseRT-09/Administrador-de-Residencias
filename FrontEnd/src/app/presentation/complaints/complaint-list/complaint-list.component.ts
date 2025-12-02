@@ -15,13 +15,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatBadgeModule } from '@angular/material/badge';
 import { GetAllComplaintsUseCase } from '../../../domain/use-cases/complaint/get-all-complaints.usecase';
-import { DeleteComplaintUseCase } from '../../../domain/use-cases/complaint/delete-complaint.usecase';
 import { UpdateComplaintUseCase } from '../../../domain/use-cases/complaint/update-complaint.usecase';
-import { Complaint, ComplaintCategory, ComplaintStatus, ComplaintPriority } from '../../../domain/models/complaint.model';
+import { DeleteComplaintUseCase } from '../../../domain/use-cases/complaint/delete-complaint.usecase';
+import { Complaint, ComplaintStatus, ComplaintCategory, ComplaintPriority } from '../../../domain/models/complaint.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -47,6 +48,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatMenuModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    MatDividerModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatBadgeModule,
@@ -57,14 +59,19 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 })
 export class ComplaintListComponent implements OnInit {
   private getAllComplaints = inject(GetAllComplaintsUseCase);
-  private deleteComplaint = inject(DeleteComplaintUseCase);
   private updateComplaint = inject(UpdateComplaintUseCase);
+  private deleteComplaint = inject(DeleteComplaintUseCase);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+
+  // Exponer enums al template
+  ComplaintStatus = ComplaintStatus;
+  ComplaintCategory = ComplaintCategory;
+  ComplaintPriority = ComplaintPriority;
 
   displayedColumns: string[] = ['asunto', 'categoria', 'prioridad', 'usuario', 'residencia', 'estado', 'fecha', 'acciones'];
   dataSource = new MatTableDataSource<Complaint>();
@@ -74,6 +81,14 @@ export class ComplaintListComponent implements OnInit {
   totalComplaints = 0;
   pageSize = 10;
   pageIndex = 0;
+
+  estados = [
+    { value: '', label: 'Todos los estados' },
+    { value: ComplaintStatus.NUEVO, label: 'Nuevo' },
+    { value: ComplaintStatus.REVISADO, label: 'Revisado' },
+    { value: ComplaintStatus.EN_PROCESO, label: 'En Proceso' },
+    { value: ComplaintStatus.RESUELTO, label: 'Resuelto' }
+  ];
 
   categorias = [
     { value: '', label: 'Todas las categorías' },
@@ -87,16 +102,6 @@ export class ComplaintListComponent implements OnInit {
     { value: ComplaintCategory.MANTENIMIENTO, label: 'Mantenimiento' },
     { value: ComplaintCategory.ADMINISTRACION, label: 'Administración' },
     { value: ComplaintCategory.OTRO, label: 'Otro' }
-  ];
-
-  estados = [
-    { value: '', label: 'Todos los estados' },
-    { value: ComplaintStatus.NUEVA, label: 'Nueva' },
-    { value: ComplaintStatus.EN_REVISION, label: 'En Revisión' },
-    { value: ComplaintStatus.EN_PROCESO, label: 'En Proceso' },
-    { value: ComplaintStatus.RESUELTA, label: 'Resuelta' },
-    { value: ComplaintStatus.CERRADA, label: 'Cerrada' },
-    { value: ComplaintStatus.RECHAZADA, label: 'Rechazada' }
   ];
 
   prioridades = [
@@ -116,11 +121,11 @@ export class ComplaintListComponent implements OnInit {
   initFilterForm(): void {
     this.filterForm = this.fb.group({
       search: [''],
-      categoria: [''],
       estado: [''],
+      categoria: [''],
       prioridad: [''],
-      fecha_inicio: [null],
-      fecha_fin: [null]
+      fecha_inicio: [''],
+      fecha_fin: ['']
     });
   }
 
@@ -145,12 +150,12 @@ export class ComplaintListComponent implements OnInit {
       limit: this.pageSize
     };
 
-    if (filters.categoria) params.categoria = filters.categoria;
     if (filters.estado) params.estado = filters.estado;
+    if (filters.categoria) params.categoria = filters.categoria;
     if (filters.prioridad) params.prioridad = filters.prioridad;
     if (filters.search) params.search = filters.search;
-    if (filters.fecha_inicio) params.fecha_inicio = filters.fecha_inicio.toISOString();
-    if (filters.fecha_fin) params.fecha_fin = filters.fecha_fin.toISOString();
+    if (filters.fecha_inicio) params.fecha_inicio = filters.fecha_inicio;
+    if (filters.fecha_fin) params.fecha_fin = filters.fecha_fin;
 
     this.getAllComplaints.execute(params).subscribe({
       next: (response) => {
@@ -174,11 +179,23 @@ export class ComplaintListComponent implements OnInit {
   clearFilters(): void {
     this.filterForm.reset({
       search: '',
-      categoria: '',
       estado: '',
+      categoria: '',
       prioridad: '',
-      fecha_inicio: null,
-      fecha_fin: null
+      fecha_inicio: '',
+      fecha_fin: ''
+    });
+  }
+
+  changeStatus(complaint: Complaint, newStatus: ComplaintStatus): void {
+    this.updateComplaint.execute(complaint.id, { estado: newStatus }).subscribe({
+      next: () => {
+        this.notificationService.success('Estado actualizado correctamente');
+        this.loadComplaints();
+      },
+      error: () => {
+        this.notificationService.error('Error al actualizar estado');
+      }
     });
   }
 
@@ -196,16 +213,24 @@ export class ComplaintListComponent implements OnInit {
     }
   }
 
-  changeStatus(complaint: Complaint, newStatus: ComplaintStatus): void {
-    this.updateComplaint.execute(complaint.id, { estado: newStatus }).subscribe({
-      next: () => {
-        this.notificationService.success(`Estado actualizado a: ${newStatus}`);
-        this.loadComplaints();
-      },
-      error: () => {
-        this.notificationService.error('Error al actualizar estado');
-      }
-    });
+  getStatusClass(status: ComplaintStatus): string {
+    const statusMap: Record<ComplaintStatus, string> = {
+      [ComplaintStatus.NUEVO]: 'status-new',
+      [ComplaintStatus.REVISADO]: 'status-reviewed',
+      [ComplaintStatus.EN_PROCESO]: 'status-in-progress',
+      [ComplaintStatus.RESUELTO]: 'status-resolved'
+    };
+    return statusMap[status];
+  }
+
+  getStatusIcon(status: ComplaintStatus): string {
+    const iconMap: Record<ComplaintStatus, string> = {
+      [ComplaintStatus.NUEVO]: 'fiber_new',
+      [ComplaintStatus.REVISADO]: 'visibility',
+      [ComplaintStatus.EN_PROCESO]: 'pending',
+      [ComplaintStatus.RESUELTO]: 'check_circle'
+    };
+    return iconMap[status];
   }
 
   getCategoryClass(category: ComplaintCategory): string {
@@ -214,11 +239,11 @@ export class ComplaintListComponent implements OnInit {
       [ComplaintCategory.CONVIVENCIA]: 'category-coexistence',
       [ComplaintCategory.MASCOTAS]: 'category-pets',
       [ComplaintCategory.ESTACIONAMIENTO]: 'category-parking',
-      [ComplaintCategory.AREAS_COMUNES]: 'category-common',
+      [ComplaintCategory.AREAS_COMUNES]: 'category-common-areas',
       [ComplaintCategory.LIMPIEZA]: 'category-cleaning',
       [ComplaintCategory.SEGURIDAD]: 'category-security',
       [ComplaintCategory.MANTENIMIENTO]: 'category-maintenance',
-      [ComplaintCategory.ADMINISTRACION]: 'category-admin',
+      [ComplaintCategory.ADMINISTRACION]: 'category-administration',
       [ComplaintCategory.OTRO]: 'category-other'
     };
     return categoryMap[category];
@@ -227,10 +252,10 @@ export class ComplaintListComponent implements OnInit {
   getCategoryIcon(category: ComplaintCategory): string {
     const iconMap: Record<ComplaintCategory, string> = {
       [ComplaintCategory.RUIDO]: 'volume_up',
-      [ComplaintCategory.CONVIVENCIA]: 'groups',
+      [ComplaintCategory.CONVIVENCIA]: 'group',
       [ComplaintCategory.MASCOTAS]: 'pets',
       [ComplaintCategory.ESTACIONAMIENTO]: 'local_parking',
-      [ComplaintCategory.AREAS_COMUNES]: 'domain',
+      [ComplaintCategory.AREAS_COMUNES]: 'apartment',
       [ComplaintCategory.LIMPIEZA]: 'cleaning_services',
       [ComplaintCategory.SEGURIDAD]: 'security',
       [ComplaintCategory.MANTENIMIENTO]: 'build',
@@ -238,30 +263,6 @@ export class ComplaintListComponent implements OnInit {
       [ComplaintCategory.OTRO]: 'help_outline'
     };
     return iconMap[category];
-  }
-
-  getStatusClass(status: ComplaintStatus): string {
-    const statusMap: Record<ComplaintStatus, string> = {
-      [ComplaintStatus.NUEVA]: 'status-new',
-      [ComplaintStatus.EN_REVISION]: 'status-review',
-      [ComplaintStatus.EN_PROCESO]: 'status-process',
-      [ComplaintStatus.RESUELTA]: 'status-resolved',
-      [ComplaintStatus.CERRADA]: 'status-closed',
-      [ComplaintStatus.RECHAZADA]: 'status-rejected'
-    };
-    return statusMap[status];
-  }
-
-  getStatusIcon(status: ComplaintStatus): string {
-    const iconMap: Record<ComplaintStatus, string> = {
-      [ComplaintStatus.NUEVA]: 'fiber_new',
-      [ComplaintStatus.EN_REVISION]: 'rate_review',
-      [ComplaintStatus.EN_PROCESO]: 'sync',
-      [ComplaintStatus.RESUELTA]: 'check_circle',
-      [ComplaintStatus.CERRADA]: 'archive',
-      [ComplaintStatus.RECHAZADA]: 'cancel'
-    };
-    return iconMap[status];
   }
 
   getPriorityClass(priority: ComplaintPriority): string {
@@ -285,19 +286,26 @@ export class ComplaintListComponent implements OnInit {
   }
 
   getUserName(complaint: Complaint): string {
-    if (complaint.usuario) {
-      return `${complaint.usuario.nombre} ${complaint.usuario.apellido}`;
+    if (complaint.es_anonima || complaint.es_anonimo) {
+      return 'Usuario Anónimo';
     }
-    return 'Usuario desconocido';
+    const user = complaint.usuario || complaint.autor;
+    if (!user) return 'N/A';
+    return `${user.nombre} ${user.apellido}`;
+  }
+
+  getUserInitials(complaint: Complaint): string {
+    if (complaint.es_anonima || complaint.es_anonimo) {
+      return 'AN';
+    }
+    const user = complaint.usuario || complaint.autor;
+    if (!user) return '?';
+    return `${user.nombre.charAt(0)}${user.apellido.charAt(0)}`.toUpperCase();
   }
 
   canEdit(complaint: Complaint): boolean {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return false;
-    
-    if (this.authService.isAdmin()) return true;
-    
-    return complaint.usuario?.id === currentUser.id && complaint.estado === ComplaintStatus.NUEVA;
+    if (!this.authService.isAdmin()) return false;
+    return complaint.estado === ComplaintStatus.NUEVO;
   }
 
   canDelete(): boolean {
@@ -309,13 +317,17 @@ export class ComplaintListComponent implements OnInit {
   }
 
   getNewCount(): number {
-    return this.dataSource.data.filter(c => c.estado === ComplaintStatus.NUEVA).length;
+    return this.dataSource.data.filter(c => c.estado === ComplaintStatus.NUEVO).length;
   }
 
   getInProcessCount(): number {
     return this.dataSource.data.filter(c => 
-      c.estado === ComplaintStatus.EN_REVISION || c.estado === ComplaintStatus.EN_PROCESO
+      c.estado === ComplaintStatus.REVISADO || c.estado === ComplaintStatus.EN_PROCESO
     ).length;
+  }
+
+  getResolvedCount(): number {
+    return this.dataSource.data.filter(c => c.estado === ComplaintStatus.RESUELTO).length;
   }
 
   getUrgentCount(): number {

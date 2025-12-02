@@ -50,6 +50,10 @@ export class ActivityFormComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
 
+  // Exponer enums al template
+  ActivityType = ActivityType;
+  ActivityStatus = ActivityStatus;
+
   activityForm!: FormGroup;
   isEditMode = false;
   activityId?: number;

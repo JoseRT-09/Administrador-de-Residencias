@@ -1,3 +1,4 @@
+// Backend/src/models/Report.js (CORREGIDO)
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -7,53 +8,86 @@ const Report = sequelize.define('Report', {
     primaryKey: true,
     autoIncrement: true
   },
-  tipo: {
-    type: DataTypes.ENUM('Incendio', 'Eléctrico', 'Agua', 'Robo', 'Otro'),
-    allowNull: false
-  },
-  residencia_id: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: 'residences',
-      key: 'id'
-    }
-  },
-  reportado_por: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
-  },
   titulo: {
-    type: DataTypes.STRING(200),
-    allowNull: false
+    type: DataTypes.STRING(150),
+    allowNull: false,
+    validate: {
+      notEmpty: true,
+      len: [5, 150]
+    }
   },
   descripcion: {
     type: DataTypes.TEXT,
-    allowNull: false
+    allowNull: false,
+    validate: {
+      notEmpty: true,
+      len: [10, 5000]
+    }
+  },
+  tipo: {
+    type: DataTypes.ENUM(
+      'Mantenimiento',
+      'Limpieza',
+      'Seguridad',
+      'Instalaciones',
+      'Otro'
+    ),
+    allowNull: false,
+    defaultValue: 'Mantenimiento'
   },
   prioridad: {
-    type: DataTypes.ENUM('Baja', 'Media', 'Alta', 'Crítica'),
+    type: DataTypes.ENUM(
+      'Baja',
+      'Media',
+      'Alta',
+      'Crítica'
+    ),
+    allowNull: false,
     defaultValue: 'Media'
   },
   estado: {
-    type: DataTypes.ENUM('Abierto', 'En Progreso', 'Resuelto', 'Cerrado'),
+    type: DataTypes.ENUM(
+      'Abierto',
+      'En Progreso',
+      'Resuelto',
+      'Cerrado'
+    ),
+    allowNull: false,
     defaultValue: 'Abierto'
   },
-  asignado_a: {
+  reportado_por_id: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     references: {
-      model: 'users',
+      model: 'Users',
       key: 'id'
     }
   },
+  residencia_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Residences',
+      key: 'id'
+    }
+  },
+  fecha_reporte: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
   fecha_resolucion: {
-    type: DataTypes.DATE
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  notas_adicionales: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
   tableName: 'reports',
   timestamps: true,
+  underscored: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 });

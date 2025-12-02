@@ -1,49 +1,34 @@
-const { DataTypes } = require('sequelize');
+// Backend/src/models/Amenity.js (CORREGIDO)
+const { DataTypes } = require('sequelize'); // Importar DataTypes
 const sequelize = require('../config/database');
 
-const Activity = sequelize.define('Activity', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+const Amenity = sequelize.define('Amenity', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  nombre: { type: DataTypes.STRING(100), allowNull: false },
+  descripcion: { type: DataTypes.TEXT },
+  tipo: { 
+    type: DataTypes.ENUM('Salón de Eventos', 'Gimnasio', 'Piscina', 'Cancha Deportiva', 
+                         'Área BBQ', 'Salón de Juegos', 'Área Infantil', 'Otro'),
+    allowNull: false 
   },
-  nombre: {
-    type: DataTypes.STRING(150),
-    allowNull: false
+  ubicacion: { type: DataTypes.STRING(100) },
+  capacidad_maxima: { type: DataTypes.INTEGER },
+  estado: { 
+    type: DataTypes.ENUM('Disponible', 'Ocupada', 'Mantenimiento', 'Fuera de Servicio'),
+    defaultValue: 'Disponible' 
   },
-  descripcion: {
-    type: DataTypes.TEXT
-  },
-  fecha_hora: {
-    type: DataTypes.DATE,
-    allowNull: false
-  },
-  ubicacion: {
-    type: DataTypes.STRING(100)
-  },
-  organizador_id: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
-  },
-  cupo_maximo: {
-    type: DataTypes.INTEGER
-  },
-  inscritos_count: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  estado: {
-    type: DataTypes.ENUM('Programada', 'En Curso', 'Completada', 'Cancelada'),
-    defaultValue: 'Programada'
-  }
+  horario_inicio: { type: DataTypes.TIME },
+  horario_fin: { type: DataTypes.TIME },
+  disponible_reserva: { type: DataTypes.BOOLEAN, defaultValue: true },
+  requiere_aprobacion: { type: DataTypes.BOOLEAN, defaultValue: false },
+  costo_reserva: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
+  reglas: { type: DataTypes.TEXT },
+  imagen_url: { type: DataTypes.STRING(255) }
 }, {
-  tableName: 'activities',
+  tableName: 'amenities',
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 });
 
-module.exports = Activity;
+module.exports = Amenity;

@@ -1,3 +1,4 @@
+// Backend/src/models/User.js (CORREGIDO)
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');

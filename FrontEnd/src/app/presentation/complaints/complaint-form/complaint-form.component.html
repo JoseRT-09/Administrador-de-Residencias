@@ -121,7 +121,8 @@
             <mat-select formControlName="residencia_id">
               <mat-option [value]="null">Queja General (no asociada a residencia)</mat-option>
               <mat-option *ngFor="let residence of residences" [value]="residence.id">
-                Unidad {{ residence.numero_unidad }} - {{ residence.tipo_residencia }}
+                Unidad {{ residence.numero_unidad }}
+                <span *ngIf="residence.bloque"> - Bloque {{ residence.bloque }}</span>
               </mat-option>
             </mat-select>
             <mat-icon matPrefix>location_on</mat-icon>

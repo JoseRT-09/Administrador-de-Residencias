@@ -1,3 +1,4 @@
+// Backend/src/models/Payment.js (CORREGIDO)
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
