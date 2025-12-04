@@ -112,3 +112,47 @@ exports.getProfile = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener perfil', error: error.message });
   }
 };
+
+// Actualizar perfil del usuario autenticado
+exports.updateProfile = async (req, res) => {
+  try {
+    const { nombre, apellido, telefono, email, password } = req.body;
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Verificar si el email está siendo cambiado y si ya existe
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ message: 'El email ya está en uso' });
+      }
+    }
+
+    // Preparar datos de actualización
+    const updateData = {};
+    if (nombre) updateData.nombre = nombre;
+    if (apellido) updateData.apellido = apellido;
+    if (telefono) updateData.telefono = telefono;
+    if (email) updateData.email = email;
+    if (password) updateData.password = password; // El hook beforeUpdate se encargará del hash
+
+    // Actualizar usuario
+    await user.update(updateData);
+
+    // Obtener usuario actualizado sin password
+    const updatedUser = await User.findByPk(req.user.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    res.json({
+      message: 'Perfil actualizado exitosamente',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error al actualizar perfil:', error);
+    res.status(500).json({ message: 'Error al actualizar perfil', error: error.message });
+  }
+};

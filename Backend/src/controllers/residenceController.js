@@ -1,37 +1,67 @@
+// Backend/src/controllers/residenceController.js (CORREGIDO COMPLETO)
 const { Residence, User, ReassignmentHistory } = require('../models');
 const { ESTADOS_RESIDENCIA } = require('../config/constants');
+const { Op } = require('sequelize');
 
 // Obtener todas las residencias
 exports.getAllResidences = async (req, res) => {
   try {
-    const { estado, bloque, page = 1, limit = 10 } = req.query;
+    const { estado, bloque, search, page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
 
     const where = {};
     if (estado) where.estado = estado;
     if (bloque) where.bloque = bloque;
+    
+    // Búsqueda por texto
+    if (search) {
+      where[Op.or] = [
+        { numero_unidad: { [Op.iLike]: `%${search}%` } },
+        { bloque: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
 
     const { count, rows } = await Residence.findAndCountAll({
       where,
       include: [
-        { model: User, as: 'dueno', attributes: ['id', 'nombre', 'apellido', 'email'] },
-        { model: User, as: 'residenteActual', attributes: ['id', 'nombre', 'apellido', 'email'] },
-        { model: User, as: 'administrador', attributes: ['id', 'nombre', 'apellido', 'email'] }
+        { 
+          model: User, 
+          as: 'dueno', 
+          attributes: ['id', 'nombre', 'apellido', 'email'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'residenteActual', 
+          attributes: ['id', 'nombre', 'apellido', 'email'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'administrador', 
+          attributes: ['id', 'nombre', 'apellido', 'email'],
+          required: false
+        }
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['numero_unidad', 'ASC']]
+      order: [['numero_unidad', 'ASC']],
+      distinct: true
     });
 
     res.json({
+      data: rows,
       total: count,
       pages: Math.ceil(count / limit),
-      currentPage: parseInt(page),
-      residences: rows
+      currentPage: parseInt(page)
     });
   } catch (error) {
     console.error('Error al obtener residencias:', error);
-    res.status(500).json({ message: 'Error al obtener residencias', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al obtener residencias', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
@@ -41,9 +71,24 @@ exports.getResidenceById = async (req, res) => {
     const { id } = req.params;
     const residence = await Residence.findByPk(id, {
       include: [
-        { model: User, as: 'dueno', attributes: ['id', 'nombre', 'apellido', 'email', 'telefono'] },
-        { model: User, as: 'residenteActual', attributes: ['id', 'nombre', 'apellido', 'email', 'telefono'] },
-        { model: User, as: 'administrador', attributes: ['id', 'nombre', 'apellido', 'email'] }
+        { 
+          model: User, 
+          as: 'dueno', 
+          attributes: ['id', 'nombre', 'apellido', 'email', 'telefono'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'residenteActual', 
+          attributes: ['id', 'nombre', 'apellido', 'email', 'telefono'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'administrador', 
+          attributes: ['id', 'nombre', 'apellido', 'email'],
+          required: false
+        }
       ]
     });
 
@@ -51,10 +96,13 @@ exports.getResidenceById = async (req, res) => {
       return res.status(404).json({ message: 'Residencia no encontrada' });
     }
 
-    res.json({ residence });
+    res.json(residence);
   } catch (error) {
     console.error('Error al obtener residencia:', error);
-    res.status(500).json({ message: 'Error al obtener residencia', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al obtener residencia', 
+      error: error.message 
+    });
   }
 };
 
@@ -66,15 +114,34 @@ exports.createResidence = async (req, res) => {
       bloque,
       piso,
       area_m2,
+      habitaciones,
+      banos,
+      estacionamientos,
+      tipo_propiedad,
+      precio,
       dueno_id,
       residente_actual_id,
-      administrador_id
+      administrador_id,
+      estado,
+      descripcion,
+      notas_adicionales
     } = req.body;
 
     // Verificar si ya existe la unidad
-    const existingResidence = await Residence.findOne({ where: { numero_unidad } });
+    const existingResidence = await Residence.findOne({ 
+      where: { numero_unidad } 
+    });
+    
     if (existingResidence) {
-      return res.status(400).json({ message: 'El número de unidad ya existe' });
+      return res.status(400).json({ 
+        message: 'El número de unidad ya existe' 
+      });
+    }
+
+    // Determinar estado automáticamente si no se proporciona
+    let finalEstado = estado || ESTADOS_RESIDENCIA.DISPONIBLE;
+    if (residente_actual_id && !estado) {
+      finalEstado = ESTADOS_RESIDENCIA.OCUPADA;
     }
 
     const residence = await Residence.create({
@@ -82,18 +149,40 @@ exports.createResidence = async (req, res) => {
       bloque,
       piso,
       area_m2,
+      habitaciones,
+      banos,
+      estacionamientos,
+      tipo_propiedad,
+      precio,
       dueno_id,
       residente_actual_id,
       administrador_id,
       fecha_asignacion: residente_actual_id ? new Date() : null,
-      estado: residente_actual_id ? ESTADOS_RESIDENCIA.OCUPADA : ESTADOS_RESIDENCIA.DISPONIBLE
+      estado: finalEstado,
+      descripcion,
+      notas_adicionales
     });
 
     const residenceWithDetails = await Residence.findByPk(residence.id, {
       include: [
-        { model: User, as: 'dueno', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'residenteActual', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'administrador', attributes: ['id', 'nombre', 'apellido'] }
+        { 
+          model: User, 
+          as: 'dueno', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'residenteActual', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'administrador', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        }
       ]
     });
 
@@ -103,7 +192,10 @@ exports.createResidence = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear residencia:', error);
-    res.status(500).json({ message: 'Error al crear residencia', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al crear residencia', 
+      error: error.message 
+    });
   }
 };
 
@@ -111,27 +203,36 @@ exports.createResidence = async (req, res) => {
 exports.updateResidence = async (req, res) => {
   try {
     const { id } = req.params;
-    const { numero_unidad, bloque, piso, area_m2, estado, administrador_id } = req.body;
+    const updateData = req.body;
 
     const residence = await Residence.findByPk(id);
     if (!residence) {
       return res.status(404).json({ message: 'Residencia no encontrada' });
     }
 
-    await residence.update({
-      numero_unidad: numero_unidad || residence.numero_unidad,
-      bloque: bloque || residence.bloque,
-      piso: piso !== undefined ? piso : residence.piso,
-      area_m2: area_m2 || residence.area_m2,
-      estado: estado || residence.estado,
-      administrador_id: administrador_id !== undefined ? administrador_id : residence.administrador_id
-    });
+    // Actualizar solo los campos proporcionados
+    await residence.update(updateData);
 
     const updatedResidence = await Residence.findByPk(id, {
       include: [
-        { model: User, as: 'dueno', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'residenteActual', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'administrador', attributes: ['id', 'nombre', 'apellido'] }
+        { 
+          model: User, 
+          as: 'dueno', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'residenteActual', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'administrador', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        }
       ]
     });
 
@@ -141,7 +242,10 @@ exports.updateResidence = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al actualizar residencia:', error);
-    res.status(500).json({ message: 'Error al actualizar residencia', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al actualizar residencia', 
+      error: error.message 
+    });
   }
 };
 
@@ -149,37 +253,60 @@ exports.updateResidence = async (req, res) => {
 exports.assignResident = async (req, res) => {
   try {
     const { id } = req.params;
-    const { residente_nuevo_id, tipo_cambio, motivo } = req.body;
+    const { 
+      residente_id,           // Para compatibilidad
+      residente_nuevo_id,     // Para el nuevo sistema
+      tipo_cambio, 
+      motivo,
+      notas
+    } = req.body;
 
     const residence = await Residence.findByPk(id);
     if (!residence) {
       return res.status(404).json({ message: 'Residencia no encontrada' });
     }
 
-    // Guardar en historial si hay un cambio
-    if (residence.residente_actual_id) {
-      await ReassignmentHistory.create({
-        residencia_id: id,
-        residente_anterior_id: residence.residente_actual_id,
-        residente_nuevo_id,
-        tipo_cambio,
-        motivo,
-        autorizado_por: req.user.id
-      });
-    }
+    // Usar residente_nuevo_id si está disponible, sino residente_id
+    const nuevoResidenteId = residente_nuevo_id || residente_id;
+
+    // Guardar en historial
+    await ReassignmentHistory.create({
+      residencia_id: id,
+      residente_anterior_id: residence.residente_actual_id,
+      residente_nuevo_id: nuevoResidenteId,
+      tipo_cambio: tipo_cambio || 'Asignacion',
+      motivo: motivo || 'Asignación de residente',
+      notas,
+      autorizado_por: req.user.id
+    });
 
     // Actualizar residencia
     await residence.update({
-      residente_actual_id: residente_nuevo_id,
-      fecha_asignacion: new Date(),
-      estado: residente_nuevo_id ? ESTADOS_RESIDENCIA.OCUPADA : ESTADOS_RESIDENCIA.DISPONIBLE
+      residente_actual_id: nuevoResidenteId,
+      fecha_asignacion: nuevoResidenteId ? new Date() : null,
+      estado: nuevoResidenteId ? ESTADOS_RESIDENCIA.OCUPADA : ESTADOS_RESIDENCIA.DISPONIBLE
     });
 
     const updatedResidence = await Residence.findByPk(id, {
       include: [
-        { model: User, as: 'dueno', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'residenteActual', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'administrador', attributes: ['id', 'nombre', 'apellido'] }
+        { 
+          model: User, 
+          as: 'dueno', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'residenteActual', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'administrador', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        }
       ]
     });
 
@@ -189,7 +316,10 @@ exports.assignResident = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al asignar residente:', error);
-    res.status(500).json({ message: 'Error al asignar residente', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al asignar residente', 
+      error: error.message 
+    });
   }
 };
 
@@ -201,17 +331,35 @@ exports.getReassignmentHistory = async (req, res) => {
     const history = await ReassignmentHistory.findAll({
       where: { residencia_id: id },
       include: [
-        { model: User, as: 'residenteAnterior', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'residenteNuevo', attributes: ['id', 'nombre', 'apellido'] },
-        { model: User, as: 'autorizadoPor', attributes: ['id', 'nombre', 'apellido'] }
+        { 
+          model: User, 
+          as: 'residenteAnterior', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'residenteNuevo', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        },
+        { 
+          model: User, 
+          as: 'autorizadoPor', 
+          attributes: ['id', 'nombre', 'apellido'],
+          required: false
+        }
       ],
       order: [['fecha_cambio', 'DESC']]
     });
 
-    res.json({ history });
+    res.json(history);
   } catch (error) {
     console.error('Error al obtener historial:', error);
-    res.status(500).json({ message: 'Error al obtener historial', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al obtener historial', 
+      error: error.message 
+    });
   }
 };
 
@@ -229,6 +377,9 @@ exports.deleteResidence = async (req, res) => {
     res.json({ message: 'Residencia eliminada exitosamente' });
   } catch (error) {
     console.error('Error al eliminar residencia:', error);
-    res.status(500).json({ message: 'Error al eliminar residencia', error: error.message });
+    res.status(500).json({ 
+      message: 'Error al eliminar residencia', 
+      error: error.message 
+    });
   }
 };

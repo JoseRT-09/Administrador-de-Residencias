@@ -146,6 +146,16 @@ export class AuthService {
     return this.http.get<{ user: User }>(`${this.apiUrl}/profile`);
   }
 
+  updateProfile(profileData: Partial<RegisterData>): Observable<{ message: string; user: User }> {
+    return this.http.put<{ message: string; user: User }>(`${this.apiUrl}/profile`, profileData)
+      .pipe(
+        tap(response => {
+          localStorage.setItem('currentUser', JSON.stringify(response.user));
+          this.currentUserSubject.next(response.user);
+        })
+      );
+  }
+
   refreshUserData(): void {
     this.getProfile().subscribe({
       next: (response) => {
