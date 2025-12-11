@@ -16,6 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { GetAllActivitiesUseCase } from '../../../domain/use-cases/activity/get-all-activities.usecase';
 import { Activity, ActivityType, ActivityStatus } from '../../../domain/models/activity.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface CalendarDay {
   date: Date;
@@ -49,6 +50,7 @@ export class ActivityCalendarComponent implements OnInit {
 
   private getAllActivities = inject(GetAllActivitiesUseCase);
   private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
 
   ActivityType = ActivityType;
   ActivityStatus = ActivityStatus;
@@ -60,7 +62,7 @@ export class ActivityCalendarComponent implements OnInit {
   activities: Activity[] = [];
   isLoading = true;
 
-  weekDays = ['Dom', 'Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b'];
+  weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   constructor() {
     this.currentMonth = new Date(
@@ -305,5 +307,10 @@ if (!response.data) {
       month: 'long',
       year: 'numeric'
     });
+  }
+
+  /** CHECK IF USER IS ADMIN */
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 }

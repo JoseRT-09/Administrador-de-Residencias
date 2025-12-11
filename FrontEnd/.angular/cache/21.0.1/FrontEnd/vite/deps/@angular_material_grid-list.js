@@ -6,12 +6,12 @@ import {
 import "./chunk-PLJ2QXBA.js";
 import "./chunk-N4DOILP3.js";
 import {
-  coerceNumberProperty
-} from "./chunk-3LAC5I73.js";
-import {
   BidiModule,
   Directionality
 } from "./chunk-TL2ITH7B.js";
+import {
+  coerceNumberProperty
+} from "./chunk-3LAC5I73.js";
 import {
   ChangeDetectionStrategy,
   Component,

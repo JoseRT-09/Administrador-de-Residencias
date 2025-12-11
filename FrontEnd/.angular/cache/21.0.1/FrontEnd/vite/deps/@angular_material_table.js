@@ -2,11 +2,10 @@ import {
   _DisposeViewRepeaterStrategy
 } from "./chunk-VYRHPPOJ.js";
 import "./chunk-PLJ2QXBA.js";
-import "./chunk-N4DOILP3.js";
 import {
   ScrollingModule,
   ViewportRuler
-} from "./chunk-SBNINPFE.js";
+} from "./chunk-WVI2N2W2.js";
 import {
   DataSource,
   _RecycleViewRepeaterStrategy,
@@ -15,6 +14,11 @@ import {
   isDataSource
 } from "./chunk-BC65752V.js";
 import "./chunk-GUGIMSVJ.js";
+import "./chunk-N4DOILP3.js";
+import {
+  BidiModule,
+  Directionality
+} from "./chunk-TL2ITH7B.js";
 import {
   Platform
 } from "./chunk-Z2ZQZFXY.js";
@@ -23,10 +27,6 @@ import {
 } from "./chunk-3LAC5I73.js";
 import "./chunk-XLQ6LPHT.js";
 import "./chunk-UC72YTJX.js";
-import {
-  BidiModule,
-  Directionality
-} from "./chunk-TL2ITH7B.js";
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,

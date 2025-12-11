@@ -16,6 +16,7 @@ import { DeleteActivityUseCase } from '../../../domain/use-cases/activity/delete
 import { Activity, ActivityStatus, ActivityType } from '../../../domain/models/activity.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ActivityService } from '../../../core/services/activity.service';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 
 @Component({
@@ -46,6 +47,7 @@ export class ActivityDetailComponent implements OnInit {
   private deleteActivity = inject(DeleteActivityUseCase);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
+  private activityService = inject(ActivityService);
 
   // Exponer enums al template
   ActivityType = ActivityType;
@@ -54,13 +56,6 @@ export class ActivityDetailComponent implements OnInit {
   activity: Activity | null = null;
   isLoading = true;
   activityId!: number;
-
-  // Mock data para participantes (en una implementaciÃ³n real vendrÃ­a del backend)
-  participants = [
-    { id: 1, nombre: 'Juan', apellido: 'PÃ©rez', email: 'juan@email.com', confirmado: true },
-    { id: 2, nombre: 'MarÃ­a', apellido: 'GarcÃ­a', email: 'maria@email.com', confirmado: true },
-    { id: 3, nombre: 'Carlos', apellido: 'LÃ³pez', email: 'carlos@email.com', confirmado: false }
-  ];
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -161,10 +156,6 @@ export class ActivityDetailComponent implements OnInit {
     return `${this.activity.organizador.nombre} ${this.activity.organizador.apellido}`;
   }
 
-  getUserInitials(firstName: string, lastName: string): string {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  }
-
   getDuration(): string {
     if (!this.activity?.fecha_fin) return 'Sin duraciÃ³n definida';
     
@@ -180,27 +171,70 @@ export class ActivityDetailComponent implements OnInit {
     return `${minutes}m`;
   }
 
-  getConfirmedCount(): number {
-    return this.participants.filter(p => p.confirmado).length;
-  }
-
   canEdit(): boolean {
-    return this.authService.isAdmin();
+    // Solo admin/superadmin pueden editar Y la actividad NO debe estar completada
+    return this.authService.isAdmin() &&
+           this.activity?.estado !== ActivityStatus.COMPLETADA;
   }
 
   canDelete(): boolean {
     return this.authService.isAdmin();
   }
 
-  sendInvitations(): void {
-    this.notificationService.info('Enviando invitaciones...');
+  onCancel(): void {
+    if (!this.activity) return;
+
+    const motivo = prompt('¿Por qué deseas cancelar esta actividad? (Opcional)');
+    if (motivo === null) return; // Usuario canceló el diálogo
+
+    this.activityService.cancelActivity(this.activityId, motivo).subscribe({
+      next: () => {
+        this.notificationService.success('Actividad cancelada correctamente');
+        this.loadActivity(); // Recargar para ver el estado actualizado
+      },
+      error: () => {
+        this.notificationService.error('Error al cancelar actividad');
+      }
+    });
   }
 
-  printActivity(): void {
-    window.print();
+  canCancel(): boolean {
+    return this.authService.isAdmin() &&
+           this.activity?.estado === ActivityStatus.PROGRAMADA;
   }
 
-  exportActivity(): void {
-    this.notificationService.info('Exportando actividad...');
+  canReschedule(): boolean {
+    return this.authService.isAdmin() &&
+           this.activity?.estado === ActivityStatus.CANCELADA;
+  }
+
+  onReschedule(): void {
+    if (!this.activity) return;
+
+    const fechaInicio = prompt(
+      'Ingresa la nueva fecha y hora de inicio (formato: YYYY-MM-DD HH:MM:SS):',
+      new Date(this.activity.fecha_inicio).toISOString().slice(0, 19).replace('T', ' ')
+    );
+
+    if (!fechaInicio) return; // Usuario canceló
+
+    const fechaFinRaw = this.activity.fecha_fin ? prompt(
+      'Ingresa la nueva fecha y hora de fin (formato: YYYY-MM-DD HH:MM:SS, opcional):',
+      new Date(this.activity.fecha_fin).toISOString().slice(0, 19).replace('T', ' ')
+    ) : undefined;
+    const fechaFin = fechaFinRaw === null ? undefined : fechaFinRaw;
+
+    this.activityService.rescheduleActivity(this.activityId, {
+      fecha_inicio: fechaInicio,
+      fecha_fin: fechaFin
+    }).subscribe({
+      next: () => {
+        this.notificationService.success('Actividad reprogramada correctamente');
+        this.loadActivity(); // Recargar para ver los cambios
+      },
+      error: () => {
+        this.notificationService.error('Error al reprogramar actividad');
+      }
+    });
   }
 }
