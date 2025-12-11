@@ -1,3 +1,5 @@
+// En core/services/report.service.ts
+
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -7,10 +9,12 @@ export interface Report {
   id: number;
   titulo: string;
   descripcion: string;
-  tipo: 'Incendio' | 'Eléctrico' | 'Agua' | 'Robo' | 'Otro';
+  // ✅ CORRECCIÓN: Tipos de reporte del backend (Mantenimiento, Limpieza, etc.)
+  tipo: 'Mantenimiento' | 'Limpieza' | 'Seguridad' | 'Instalaciones' | 'Otro';
   prioridad: 'Baja' | 'Media' | 'Alta' | 'Crítica';
   estado: 'Abierto' | 'En Progreso' | 'Resuelto' | 'Cerrado';
-  reportado_por_id: number;
+  reportado_por_id?: number;
+  reportado_por?: number;
   asignado_a?: number;
   residencia_id?: number;
   fecha_resolucion?: string;
@@ -20,10 +24,11 @@ export interface Report {
   reportadoPor?: any;
   asignadoA?: any;
   residencia?: any;
+  Residence?: any;
 }
 
 export interface ReportListResponse {
-  data: Report[];
+  data: Report[]; // Se mantiene 'data' (correcto)
   total: number;
   pages: number;
   currentPage: number;
@@ -32,7 +37,8 @@ export interface ReportListResponse {
 export interface CreateReportData {
   titulo: string;
   descripcion: string;
-  tipo: 'Incendio' | 'Eléctrico' | 'Agua' | 'Robo' | 'Otro';
+  // ✅ CORRECCIÓN: Tipos de reporte del backend
+  tipo: 'Mantenimiento' | 'Limpieza' | 'Seguridad' | 'Instalaciones' | 'Otro';
   prioridad?: 'Baja' | 'Media' | 'Alta' | 'Crítica';
   residencia_id?: number;
 }
@@ -44,23 +50,15 @@ export class ReportService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/reports`;
 
-  getAllReports(filters?: {
-    tipo?: string;
-    estado?: string;
-    prioridad?: string;
-    residencia_id?: number;
-    page?: number;
-    limit?: number;
-  }): Observable<ReportListResponse> {
+  getAllReports(filters?: any): Observable<ReportListResponse> {
     let params = new HttpParams();
 
     if (filters) {
-      if (filters.tipo) params = params.set('tipo', filters.tipo);
-      if (filters.estado) params = params.set('estado', filters.estado);
-      if (filters.prioridad) params = params.set('prioridad', filters.prioridad);
-      if (filters.residencia_id) params = params.set('residencia_id', filters.residencia_id.toString());
-      if (filters.page) params = params.set('page', filters.page.toString());
-      if (filters.limit) params = params.set('limit', filters.limit.toString());
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+          params = params.set(key, filters[key].toString());
+        }
+      });
     }
 
     return this.http.get<ReportListResponse>(this.apiUrl, { params });
@@ -74,10 +72,7 @@ export class ReportService {
     return this.http.post<{ message: string; report: Report }>(this.apiUrl, data);
   }
 
-  updateReport(id: number, data: Partial<CreateReportData & {
-    estado?: 'Abierto' | 'En Progreso' | 'Resuelto' | 'Cerrado';
-    asignado_a?: number;
-  }>): Observable<{ message: string; report: Report }> {
+  updateReport(id: number, data: any): Observable<{ message: string; report: Report }> {
     return this.http.put<{ message: string; report: Report }>(`${this.apiUrl}/${id}`, data);
   }
 

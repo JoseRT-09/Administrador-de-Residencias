@@ -43,7 +43,7 @@
     <div class="navbar-actions" *ngIf="currentUser$ | async as user">
       <!-- Notificaciones -->
       <button mat-icon-button class="action-button">
-        <mat-icon [matBadge]="notificationCount" matBadgeColor="warn" matBadgeSize="small">
+        <mat-icon [matBadge]="notificationCount" matBadgeColor="warn" matBadgeSize="small" aria-hidden="false">
           notifications
         </mat-icon>
       </button>

@@ -1,4 +1,3 @@
-// Backend/src/models/Report.js (CORREGIDO)
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -59,7 +58,15 @@ const Report = sequelize.define('Report', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users', 
+      key: 'id'
+    }
+  },
+  asignado_a: { 
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
       key: 'id'
     }
   },
@@ -67,7 +74,7 @@ const Report = sequelize.define('Report', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Residences',
+      model: 'residences',  
       key: 'id'
     }
   },

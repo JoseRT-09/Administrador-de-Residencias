@@ -1,10 +1,10 @@
 // Enums
 export enum ActivityType {
-  REUNION = 'Reunión',
+  REUNION = 'ReuniÃ³n',
   EVENTO = 'Evento',
   MANTENIMIENTO = 'Mantenimiento',
   ASAMBLEA = 'Asamblea',
-  CELEBRACION = 'Celebración',
+  CELEBRACION = 'CelebraciÃ³n',
   OTRO = 'Otro'
 }
 
@@ -20,7 +20,7 @@ export interface Activity {
   descripcion: string;
   tipo: ActivityType;
   fecha_inicio: Date | string;
-  fecha_fin?: Date | string;
+  fecha_fin?: Date | string | null;
   ubicacion: string;
   organizador_id: number;
   organizador?: {
@@ -31,6 +31,7 @@ export interface Activity {
     telefono?: string;
   };
   max_participantes?: number;
+  inscritos_count?: number;
   estado: ActivityStatus;
   notas?: string;
   created_at: Date | string;

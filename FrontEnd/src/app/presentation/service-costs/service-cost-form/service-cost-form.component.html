@@ -1,0 +1,114 @@
+<div class="container mx-auto p-4">
+  <mat-card class="shadow-lg">
+    <mat-card-header>
+      <mat-card-title class="text-2xl font-bold text-gray-800">
+        {{ isEditMode ? 'Editar' : 'Crear' }} Costo de Servicio
+      </mat-card-title>
+      <mat-card-subtitle>Configure cuotas de mantenimiento o servicios especiales.</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content class="mt-4">
+      
+      <!-- SPINNER DE CARGA -->
+      <div *ngIf="isLoading" class="flex justify-center py-8">
+        <mat-progress-spinner mode="indeterminate" diameter="50" color="primary"></mat-progress-spinner>
+      </div>
+
+      <!-- FORMULARIO PRINCIPAL -->
+      <form [formGroup]="costForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Concepto / Nombre -->
+          <mat-form-field appearance="outline">
+            <mat-label>Concepto del Cargo</mat-label>
+            <input matInput formControlName="nombre_servicio" placeholder="Ej: Cuota de Mantenimiento Enero">
+            <mat-error *ngIf="costForm.get('nombre_servicio')?.invalid">{{ getErrorMessage('nombre_servicio') }}</mat-error>
+          </mat-form-field>
+
+          <!-- Monto -->
+          <mat-form-field appearance="outline">
+            <mat-label>Monto</mat-label>
+            <input matInput formControlName="monto" type="number" step="0.01" placeholder="Ej: 150.00">
+            <mat-icon matPrefix>attach_money</mat-icon>
+            <mat-error *ngIf="costForm.get('monto')?.invalid">{{ getErrorMessage('monto') }}</mat-error>
+          </mat-form-field>
+
+          <!-- Periodo -->
+          <mat-form-field appearance="outline">
+            <mat-label>Periodicidad</mat-label>
+            <mat-select formControlName="periodo" (selectionChange)="calculateDueDate()">
+              <mat-option *ngFor="let p of periodos" [value]="p.value">
+                <mat-icon [matTooltip]="p.description">{{ p.icon }}</mat-icon>
+                {{ p.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="costForm.get('periodo')?.invalid">{{ getErrorMessage('periodo') }}</mat-error>
+          </mat-form-field>
+
+          <!-- Residencia (Opcional - solo si el costo es individual) -->
+          <mat-form-field appearance="outline">
+            <mat-label>Residencia Asociada (Opcional)</mat-label>
+            <mat-select formControlName="residencia_id">
+              <mat-option [value]="null">Todos (Costo general)</mat-option>
+              <mat-option *ngFor="let res of residences" [value]="res.id">
+                Unidad #{{ res.numero_unidad }} (Bloque {{ res.bloque }})
+              </mat-option>
+            </mat-select>
+            <mat-hint>Dejar vacío si aplica a todas las unidades.</mat-hint>
+          </mat-form-field>
+          
+          <!-- Fecha de Inicio -->
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha de Inicio del Cargo</mat-label>
+            <input matInput [matDatepicker]="startDatePicker" formControlName="fecha_inicio" (dateInput)="calculateDueDate()">
+            <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #startDatePicker></mat-datepicker>
+            <mat-error *ngIf="costForm.get('fecha_inicio')?.invalid">{{ getErrorMessage('fecha_inicio') }}</mat-error>
+          </mat-form-field>
+
+          <!-- Fecha de Vencimiento -->
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha de Vencimiento (Estimada)</mat-label>
+            <input matInput [matDatepicker]="dueDatepicker" formControlName="fecha_vencimiento">
+            <mat-datepicker-toggle matSuffix [for]="dueDatepicker"></mat-datepicker-toggle>
+            <mat-datepicker #dueDatepicker></mat-datepicker>
+            <mat-error *ngIf="costForm.get('fecha_vencimiento')?.invalid">{{ getErrorMessage('fecha_vencimiento') }}</mat-error>
+            <mat-hint *ngIf="costForm.get('fecha_vencimiento')?.value && costForm.get('periodo')?.value">Calculada automáticamente basada en el periodo.</mat-hint>
+          </mat-form-field>
+
+          <!-- Estado (Solo en Edición y Admin) -->
+          <mat-form-field appearance="outline" *ngIf="isEditMode">
+            <mat-label>Estado del Pago</mat-label>
+            <mat-select formControlName="estado">
+              <mat-option *ngFor="let est of estados" [value]="est.value">
+                <mat-icon [style.color]="est.color">{{ est.icon }}</mat-icon>
+                {{ est.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <!-- Descripción (Toma columna completa) -->
+          <mat-form-field appearance="outline" class="md:col-span-2">
+            <mat-label>Descripción / Detalles</mat-label>
+            <textarea matInput formControlName="descripcion" placeholder="Detalles del concepto de cobro"></textarea>
+          </mat-form-field>
+          
+        </div>
+
+        <mat-divider class="my-4"></mat-divider>
+        
+        <!-- Botones de Acción -->
+        <div class="flex justify-end space-x-3">
+          <button mat-stroked-button type="button" (click)="onCancel()">
+            <mat-icon>cancel</mat-icon> Cancelar
+          </button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="costForm.invalid || isSaving">
+            <mat-icon>{{ isEditMode ? 'save' : 'add_circle' }}</mat-icon> {{ isSaving ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Costo') }}
+          </button>
+        </div>
+      </form>
+
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,3 +1,4 @@
+// Frontend/src/app/presentation/reports/report-list/report-list.component.ts (CORREGIDO FINAL)
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -19,297 +20,305 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
-import { GetAllReportsUseCase } from '../../../domain/use-cases/report/get-all-reports.usecase';
-import { DeleteReportUseCase } from '../../../domain/use-cases/report/delete-report.usecase';
-import { UpdateReportUseCase } from '../../../domain/use-cases/report/update-report.usecase';
-import { Report, ReportType, ReportStatus, ReportPriority } from '../../../domain/models/report.model';
+import { ReportService, ReportListResponse } from '../../../core/services/report.service'; // Asegurar la importación del service
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-report-list',
-  standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    ReactiveFormsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatChipsModule,
-    MatMenuModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatBadgeModule,
-    MatDividerModule,
-    TimeAgoPipe
-  ],
-  templateUrl: './report-list.component.html',
-  styleUrls: ['./report-list.component.scss']
+  selector: 'app-report-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatChipsModule,
+    MatMenuModule,
+    MatTooltipModule,
+    MatProgressSpinnerModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatBadgeModule,
+    MatDividerModule,
+    TimeAgoPipe 
+  ],
+  templateUrl: './report-list.component.html',
+  styleUrls: ['./report-list.component.scss']
 })
 export class ReportListComponent implements OnInit {
-  private getAllReports = inject(GetAllReportsUseCase);
-  private deleteReport = inject(DeleteReportUseCase);
-  private updateReport = inject(UpdateReportUseCase);
-  private notificationService = inject(NotificationService);
-  private authService = inject(AuthService);
-  private fb = inject(FormBuilder);
+  private reportService = inject(ReportService);
+  private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
+  private fb = inject(FormBuilder);
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['titulo', 'tipo', 'prioridad', 'residencia', 'reportado_por', 'estado', 'fecha_reporte', 'acciones'];
-  dataSource = new MatTableDataSource<Report>();
-  
-  filterForm!: FormGroup;
-  isLoading = true;
-  totalReports = 0;
-  pageSize = 10;
-  pageIndex = 0;
+  displayedColumns: string[] = ['titulo', 'tipo', 'prioridad', 'residencia', 'reportado_por', 'estado', 'fecha_reporte', 'acciones'];
+  dataSource = new MatTableDataSource<any>();
 
-  tipos = [
-    { value: '', label: 'Todos los tipos' },
-    { value: ReportType.INCENDIO, label: 'Incendio' },
-    { value: ReportType.ELECTRICO, label: 'Eléctrico' },
-    { value: ReportType.AGUA, label: 'Agua' },
-    { value: ReportType.ROBO, label: 'Robo' },
-    { value: ReportType.OTRO, label: 'Otro' }
-  ];
+  filterForm!: FormGroup;
+  isLoading = true;
+  totalReports = 0;
+  pageSize = 10;
+  pageIndex = 0;
 
-  estados = [
-    { value: '', label: 'Todos los estados' },
-    { value: ReportStatus.ABIERTO, label: 'Abierto' },
-    { value: ReportStatus.EN_PROGRESO, label: 'En Progreso' },
-    { value: ReportStatus.RESUELTO, label: 'Resuelto' },
-    { value: ReportStatus.CERRADO, label: 'Cerrado' }
-  ];
+  // ✅ CORRECCIÓN: Actualizar tipos de reporte a los valores del backend
+  tipos = [
+    { value: '', label: 'Todos los tipos' },
+    { value: 'Mantenimiento', label: 'Mantenimiento' },
+    { value: 'Limpieza', label: 'Limpieza' },
+    { value: 'Seguridad', label: 'Seguridad' },
+    { value: 'Instalaciones', label: 'Instalaciones' },
+    { value: 'Otro', label: 'Otro' }
+  ];
 
-  prioridades = [
-    { value: '', label: 'Todas las prioridades' },
-    { value: ReportPriority.BAJA, label: 'Baja' },
-    { value: ReportPriority.MEDIA, label: 'Media' },
-    { value: ReportPriority.ALTA, label: 'Alta' },
-    { value: ReportPriority.CRITICA, label: 'Crítica' }
-  ];
+  estados = [
+    { value: '', label: 'Todos los estados' },
+    { value: 'Abierto', label: 'Abierto' },
+    { value: 'En Progreso', label: 'En Progreso' },
+    { value: 'Resuelto', label: 'Resuelto' },
+    { value: 'Cerrado', label: 'Cerrado' }
+  ];
 
-  ngOnInit(): void {
-    this.initFilterForm();
-    this.loadReports();
-    this.setupFilterListeners();
-  }
+  prioridades = [
+    { value: '', label: 'Todas las prioridades' },
+    { value: 'Baja', label: 'Baja' },
+    { value: 'Media', label: 'Media' },
+    { value: 'Alta', label: 'Alta' },
+    { value: 'Crítica', label: 'Crítica' }
+  ];
 
-  initFilterForm(): void {
-    this.filterForm = this.fb.group({
-      search: [''],
-      tipo: [''],
-      estado: [''],
-      prioridad: [''],
-      fecha_inicio: [null],
-      fecha_fin: [null]
-    });
-  }
+  ngOnInit(): void {
+    this.initFilterForm();
+    this.loadReports();
+    this.setupFilterListeners();
+  }
 
-  setupFilterListeners(): void {
-    this.filterForm.valueChanges
-      .pipe(
-        debounceTime(400),
-        distinctUntilChanged()
-      )
-      .subscribe(() => {
-        this.pageIndex = 0;
-        this.loadReports();
-      });
-  }
+  initFilterForm(): void {
+    this.filterForm = this.fb.group({
+      search: [''],
+      tipo: [''],
+      estado: [''],
+      prioridad: [''],
+      fecha_inicio: [null],
+      fecha_fin: [null]
+    });
+  }
 
-  loadReports(): void {
-    this.isLoading = true;
+  setupFilterListeners(): void {
+    this.filterForm.valueChanges
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.pageIndex = 0;
+        this.loadReports();
+      });
+  }
 
-    const filters = this.filterForm.value;
-    const params: any = {
-      page: this.pageIndex + 1,
-      limit: this.pageSize
-    };
+  loadReports(): void {
+    this.isLoading = true;
 
-    if (filters.tipo) params.tipo = filters.tipo;
-    if (filters.estado) params.estado = filters.estado;
-    if (filters.prioridad) params.prioridad = filters.prioridad;
-    if (filters.search) params.search = filters.search;
-    if (filters.fecha_inicio) params.fecha_inicio = filters.fecha_inicio.toISOString();
-    if (filters.fecha_fin) params.fecha_fin = filters.fecha_fin.toISOString();
+    const filters = this.filterForm.value;
+    const params: any = {
+      page: this.pageIndex + 1,
+      limit: this.pageSize
+    };
 
-    this.getAllReports.execute(params).subscribe({
-      next: (response) => {
-        this.dataSource.data = response.data;
-        this.totalReports = response.total;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.notificationService.error('Error al cargar reportes');
-        this.isLoading = false;
-      }
-    });
-  }
+    if (filters.tipo) params.tipo = filters.tipo;
+    if (filters.estado) params.estado = filters.estado;
+    if (filters.prioridad) params.prioridad = filters.prioridad;
+    if (filters.search) params.search = filters.search;
+    if (filters.fecha_inicio) {
+      const year = filters.fecha_inicio.getFullYear();
+      const month = String(filters.fecha_inicio.getMonth() + 1).padStart(2, '0');
+      const day = String(filters.fecha_inicio.getDate()).padStart(2, '0');
+      params.fecha_inicio = `${year}-${month}-${day}`;
+    }
+    if (filters.fecha_fin) {
+      const year = filters.fecha_fin.getFullYear();
+      const month = String(filters.fecha_fin.getMonth() + 1).padStart(2, '0');
+      const day = String(filters.fecha_fin.getDate()).padStart(2, '0');
+      params.fecha_fin = `${year}-${month}-${day}`;
+    }
 
-  onPageChange(event: PageEvent): void {
-    this.pageIndex = event.pageIndex;
-    this.pageSize = event.pageSize;
-    this.loadReports();
-  }
+    this.reportService.getAllReports(params).subscribe({
+      next: (response) => {
+        // response.data es correcto según ReportListResponse en el servicio
+        this.dataSource.data = response.data;
+        this.totalReports = response.total;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.notificationService.error('Error al cargar reportes');
+        this.isLoading = false;
+      }
+    });
+  }
 
-  clearFilters(): void {
-    this.filterForm.reset({
-      search: '',
-      tipo: '',
-      estado: '',
-      prioridad: '',
-      fecha_inicio: null,
-      fecha_fin: null
-    });
-  }
+  onPageChange(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.loadReports();
+  }
 
-  onDelete(report: Report): void {
-    if (confirm(`¿Estás seguro de eliminar el reporte "${report.titulo}"?`)) {
-      this.deleteReport.execute(report.id).subscribe({
-        next: () => {
-          this.notificationService.success('Reporte eliminado correctamente');
-          this.loadReports();
-        },
-        error: () => {
-          this.notificationService.error('Error al eliminar reporte');
-        }
-      });
-    }
-  }
+  clearFilters(): void {
+    this.filterForm.reset({
+      search: '',
+      tipo: '',
+      estado: '',
+      prioridad: '',
+      fecha_inicio: null,
+      fecha_fin: null
+    });
+  }
 
-  changeStatus(report: Report, newStatus: ReportStatus): void {
-    this.updateReport.execute(report.id, { estado: newStatus }).subscribe({
-      next: () => {
-        this.notificationService.success(`Estado actualizado a: ${newStatus}`);
-        this.loadReports();
-      },
-      error: () => {
-        this.notificationService.error('Error al actualizar estado');
-      }
-    });
-  }
+  onDelete(report: any): void {
+    if (confirm(`¿Estás seguro de eliminar el reporte "${report.titulo}"?`)) {
+      this.reportService.deleteReport(report.id).subscribe({
+        next: () => {
+          this.notificationService.success('Reporte eliminado correctamente');
+          this.loadReports();
+        },
+        error: () => {
+          this.notificationService.error('Error al eliminar reporte');
+        }
+      });
+    }
+  }
 
-  getTypeClass(type: ReportType): string {
-    const typeMap: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: 'type-fire',
-      [ReportType.ELECTRICO]: 'type-electric',
-      [ReportType.AGUA]: 'type-water',
-      [ReportType.ROBO]: 'type-theft',
-      [ReportType.OTRO]: 'type-other'
-    };
-    return typeMap[type] || 'type-other';
-  }
+  changeStatus(report: any, newStatus: string): void {
+    this.reportService.updateReport(report.id, { estado: newStatus }).subscribe({
+      next: () => {
+        this.notificationService.success(`Estado actualizado a: ${newStatus}`);
+        this.loadReports();
+      },
+      error: () => {
+        this.notificationService.error('Error al actualizar estado');
+      }
+    });
+  }
 
-  getTypeIcon(type: ReportType): string {
-    const iconMap: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: 'local_fire_department',
-      [ReportType.ELECTRICO]: 'flash_on',
-      [ReportType.AGUA]: 'water_drop',
-      [ReportType.ROBO]: 'security',
-      [ReportType.OTRO]: 'help_outline'
-    };
-    return iconMap[type] || 'help_outline';
-  }
+  // ✅ CORRECCIÓN: Funciones de utilidad actualizadas
+  getTypeClass(type: string): string {
+    const typeMap: Record<string, string> = {
+      'Mantenimiento': 'type-maintenance',
+      'Limpieza': 'type-cleaning',
+      'Seguridad': 'type-security',
+      'Instalaciones': 'type-installations',
+      'Otro': 'type-other'
+    };
+    return typeMap[type] || 'type-other';
+  }
 
-  getStatusClass(status: ReportStatus): string {
-    const statusMap: Record<ReportStatus, string> = {
-      [ReportStatus.ABIERTO]: 'status-open',
-      [ReportStatus.EN_PROGRESO]: 'status-progress',
-      [ReportStatus.RESUELTO]: 'status-resolved',
-      [ReportStatus.CERRADO]: 'status-closed'
-    };
-    return statusMap[status];
-  }
+  getTypeIcon(type: string): string {
+    const iconMap: Record<string, string> = {
+      'Mantenimiento': 'build',
+      'Limpieza': 'cleaning_services',
+      'Seguridad': 'security',
+      'Instalaciones': 'devices',
+      'Otro': 'help_outline'
+    };
+    return iconMap[type] || 'help_outline';
+  }
 
-  getStatusIcon(status: ReportStatus): string {
-    const iconMap: Record<ReportStatus, string> = {
-      [ReportStatus.ABIERTO]: 'error_outline',
-      [ReportStatus.EN_PROGRESO]: 'sync',
-      [ReportStatus.RESUELTO]: 'check_circle',
-      [ReportStatus.CERRADO]: 'archive'
-    };
-    return iconMap[status];
-  }
+  getStatusClass(status: string): string {
+    const statusMap: Record<string, string> = {
+      'Abierto': 'status-open',
+      'En Progreso': 'status-progress',
+      'Resuelto': 'status-resolved',
+      'Cerrado': 'status-closed'
+    };
+    return statusMap[status] || 'status-default';
+  }
 
-  getPriorityClass(priority: ReportPriority): string {
-    const priorityMap: Record<ReportPriority, string> = {
-      [ReportPriority.BAJA]: 'priority-low',
-      [ReportPriority.MEDIA]: 'priority-medium',
-      [ReportPriority.ALTA]: 'priority-high',
-      [ReportPriority.CRITICA]: 'priority-critical'
-    };
-    return priorityMap[priority];
-  }
+  getStatusIcon(status: string): string {
+    const iconMap: Record<string, string> = {
+      'Abierto': 'error_outline',
+      'En Progreso': 'sync',
+      'Resuelto': 'check_circle',
+      'Cerrado': 'archive'
+    };
+    return iconMap[status] || 'help_outline';
+  }
 
-  getPriorityIcon(priority: ReportPriority): string {
-    const iconMap: Record<ReportPriority, string> = {
-      [ReportPriority.BAJA]: 'arrow_downward',
-      [ReportPriority.MEDIA]: 'remove',
-      [ReportPriority.ALTA]: 'arrow_upward',
-      [ReportPriority.CRITICA]: 'priority_high'
-    };
-    return iconMap[priority];
-  }
+  getPriorityClass(priority: string): string {
+    const priorityMap: Record<string, string> = {
+      'Baja': 'priority-low',
+      'Media': 'priority-medium',
+      'Alta': 'priority-high',
+      'Crítica': 'priority-critical'
+    };
+    return priorityMap[priority] || 'priority-default';
+  }
 
-  getReporterName(report: Report): string {
-    if (report.reportadoPor) {
-      return `${report.reportadoPor.nombre} ${report.reportadoPor.apellido}`;
-    }
-    return 'Usuario desconocido';
-  }
+  getPriorityIcon(priority: string): string {
+    const iconMap: Record<string, string> = {
+      'Baja': 'arrow_downward',
+      'Media': 'remove',
+      'Alta': 'arrow_upward',
+      'Crítica': 'priority_high'
+    };
+    return iconMap[priority] || 'help_outline';
+  }
 
-  canEdit(report: Report): boolean {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return false;
-    
-    // Admin puede editar todos
-    if (this.authService.isAdmin()) return true;
-    
-    // Usuario puede editar sus propios reportes si están abiertos
-    return report.reportado_por === currentUser.id && report.estado === ReportStatus.ABIERTO;
-  }
+  getReporterName(report: any): string {
+    if (report.reportadoPor) {
+      return `${report.reportadoPor.nombre} ${report.reportadoPor.apellido}`;
+    }
+    return 'Usuario desconocido';
+  }
 
-  canDelete(): boolean {
-    return this.authService.isAdmin();
-  }
+  canEdit(report: any): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return false;
 
-  exportToCSV(): void {
-    this.notificationService.info('Exportando a CSV...');
-  }
+    // Admin puede editar todos
+    if (this.authService.isAdmin()) return true;
 
-  getOpenCount(): number {
-    return this.dataSource.data.filter(r => r.estado === ReportStatus.ABIERTO).length;
-  }
+    // Usar reportado_por_id, que es la columna FK real.
+    return report.reportado_por_id === currentUser.id && report.estado === 'Abierto';
+  }
 
-  getInProgressCount(): number {
-    return this.dataSource.data.filter(r => r.estado === ReportStatus.EN_PROGRESO).length;
-  }
+  canDelete(): boolean {
+    return this.authService.isAdmin();
+  }
 
-  getCriticalCount(): number {
-    return this.dataSource.data.filter(r => r.prioridad === ReportPriority.CRITICA).length;
-  }
+  exportToCSV(): void {
+    this.notificationService.info('Exportando a CSV...');
+  }
 
-  // Helper para obtener residencia
-  getResidence(report: Report) {
-    return report.Residence || report.residencia;
-  }
+  getOpenCount(): number {
+    return this.dataSource.data.filter(r => r.estado === 'Abierto').length;
+  }
 
-  // Helper para obtener fecha de creación
-  getCreatedDate(report: Report): Date | string {
-    return report.created_at || new Date();
-  }
+  getInProgressCount(): number {
+    return this.dataSource.data.filter(r => r.estado === 'En Progreso').length;
+  }
+
+  getCriticalCount(): number {
+    return this.dataSource.data.filter(r => r.prioridad === 'Crítica').length;
+  }
+
+  // Helper para obtener residencia
+  getResidence(report: any) {
+    return report.Residence || report.residencia;
+  }
+
+  // Helper para obtener fecha de creación
+  getCreatedDate(report: any): Date | string {
+    return report.created_at || new Date();
+  }
 }

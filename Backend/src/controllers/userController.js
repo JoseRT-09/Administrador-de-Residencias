@@ -16,7 +16,7 @@ exports.getAllUsers = async (req, res) => {
       attributes: { exclude: ['password'] },
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']]
+      order: [['fecha_registro', 'DESC']],
     });
 
     res.json({

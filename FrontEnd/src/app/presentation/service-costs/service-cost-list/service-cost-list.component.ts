@@ -17,12 +17,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDividerModule } from '@angular/material/divider';
 import { GetAllServiceCostsUseCase } from '../../../domain/use-cases/service-cost/get-all-service-costs.usecase';
 import { DeleteServiceCostUseCase } from '../../../domain/use-cases/service-cost/delete-service-cost.usecase';
 import { ServiceCost, ServiceCostPeriod, ServiceCostStatus } from '../../../domain/models/service-cost.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { TruncatePipe } from '../../../shared/pipes/truncate.pipe';
 
 @Component({
   selector: 'app-service-cost-list',
@@ -45,7 +47,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatDividerModule,
+    TruncatePipe
   ],
   templateUrl: './service-cost-list.component.html',
   styleUrls: ['./service-cost-list.component.scss']
@@ -220,6 +224,12 @@ export class ServiceCostListComponent implements OnInit {
     return this.dataSource.data
       .filter(cost => cost.estado === ServiceCostStatus.PENDIENTE)
       .reduce((sum, cost) => sum + cost.monto, 0);
+  }
+
+  getPaidCount(): number {
+    return this.dataSource.data
+      .filter(cost => cost.estado === ServiceCostStatus.PAGADO)
+      .length;
   }
 
   canEdit(): boolean {

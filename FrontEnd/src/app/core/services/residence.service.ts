@@ -17,7 +17,7 @@ export interface Residence {
   dueno_id?: number;
   residente_actual_id?: number;
   administrador_id?: number;
-  fecha_asignacion?: string;
+  fecha_asignacion?: string | null; // ✅ CORRECCIÓN: Permite null (si se desasigna)
   estado: 'Disponible' | 'Ocupada' | 'Mantenimiento';
   descripcion?: string;
   notas_adicionales?: string;
@@ -29,7 +29,7 @@ export interface Residence {
 }
 
 export interface ResidenceListResponse {
-  data: Residence[];
+  data: Residence[]; // ✅ CORRECCIÓN: El backend devuelve la lista en 'data'
   total: number;
   pages: number;
   currentPage: number;
@@ -80,8 +80,8 @@ export class ResidenceService {
     return this.http.get<ResidenceListResponse>(this.apiUrl, { params });
   }
 
-  getResidenceById(id: number): Observable<Residence> {
-    return this.http.get<Residence>(`${this.apiUrl}/${id}`);
+  getResidenceById(id: number): Observable<{ residence: Residence }> { // ✅ CORRECCIÓN: Envuelve el objeto de respuesta
+    return this.http.get<{ residence: Residence }>(`${this.apiUrl}/${id}`);
   }
 
   createResidence(data: CreateResidenceData): Observable<{ message: string; residence: Residence }> {

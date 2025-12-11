@@ -1,34 +1,58 @@
-// Backend/src/models/Amenity.js (CORREGIDO)
-const { DataTypes } = require('sequelize'); // Importar DataTypes
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Amenity = sequelize.define('Amenity', {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  nombre: { type: DataTypes.STRING(100), allowNull: false },
-  descripcion: { type: DataTypes.TEXT },
-  tipo: { 
-    type: DataTypes.ENUM('Salón de Eventos', 'Gimnasio', 'Piscina', 'Cancha Deportiva', 
-                         'Área BBQ', 'Salón de Juegos', 'Área Infantil', 'Otro'),
-    allowNull: false 
+const Activity = sequelize.define('Activity', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  ubicacion: { type: DataTypes.STRING(100) },
-  capacidad_maxima: { type: DataTypes.INTEGER },
-  estado: { 
-    type: DataTypes.ENUM('Disponible', 'Ocupada', 'Mantenimiento', 'Fuera de Servicio'),
-    defaultValue: 'Disponible' 
+  titulo: {
+    type: DataTypes.STRING(150),
+    allowNull: false
   },
-  horario_inicio: { type: DataTypes.TIME },
-  horario_fin: { type: DataTypes.TIME },
-  disponible_reserva: { type: DataTypes.BOOLEAN, defaultValue: true },
-  requiere_aprobacion: { type: DataTypes.BOOLEAN, defaultValue: false },
-  costo_reserva: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
-  reglas: { type: DataTypes.TEXT },
-  imagen_url: { type: DataTypes.STRING(255) }
+  descripcion: {
+    type: DataTypes.TEXT
+  },
+  tipo: {
+    type: DataTypes.ENUM('ReuniÃ³n', 'Evento', 'Mantenimiento', 'Asamblea', 'CelebraciÃ³n', 'Otro'),
+    allowNull: false,
+    defaultValue: 'Evento'
+  },
+  fecha_inicio: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  fecha_fin: {
+    type: DataTypes.DATE
+  },
+  ubicacion: {
+    type: DataTypes.STRING(100)
+  },
+  organizador_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  max_participantes: {
+    type: DataTypes.INTEGER
+  },
+  inscritos_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  estado: {
+    type: DataTypes.ENUM('Programada', 'En Curso', 'Completada', 'Cancelada'),
+    defaultValue: 'Programada'
+  }
 }, {
-  tableName: 'amenities',
+  tableName: 'activities',
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 });
 
-module.exports = Amenity;
+module.exports = Activity;

@@ -15,6 +15,7 @@ export interface Activity {
   max_participantes?: number;
   inscritos_count: number;
   estado: 'Programada' | 'En Curso' | 'Completada' | 'Cancelada';
+  notas?: string;
   created_at?: string;
   updated_at?: string;
   organizador?: any;
@@ -27,16 +28,6 @@ export interface ActivityListResponse {
   currentPage: number;
 }
 
-export interface CreateActivityData {
-  titulo: string;
-  descripcion?: string;
-  tipo?: 'Reunión' | 'Evento' | 'Mantenimiento' | 'Asamblea' | 'Celebración' | 'Otro';
-  fecha_inicio: string;
-  fecha_fin?: string;
-  ubicacion?: string;
-  max_participantes?: number;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -45,36 +36,41 @@ export class ActivityService {
   private apiUrl = `${environment.apiUrl}/activities`;
 
   getAllActivities(filters?: {
-    tipo?: string;
-    estado?: string;
-    upcoming?: boolean;
-    page?: number;
-    limit?: number;
-  }): Observable<ActivityListResponse> {
-    let params = new HttpParams();
+  tipo?: string;
+  estado?: string;
+  upcoming?: boolean;
+  page?: number;
+  limit?: number;
+  fecha_inicio?: string;   // <-- AGREGADO
+  fecha_fin?: string;      // <-- AGREGADO
+}): Observable<ActivityListResponse> {
 
-    if (filters) {
-      if (filters.tipo) params = params.set('tipo', filters.tipo);
-      if (filters.estado) params = params.set('estado', filters.estado);
-      if (filters.upcoming !== undefined) params = params.set('upcoming', filters.upcoming.toString());
-      if (filters.page) params = params.set('page', filters.page.toString());
-      if (filters.limit) params = params.set('limit', filters.limit.toString());
-    }
+  let params = new HttpParams();
 
-    return this.http.get<ActivityListResponse>(this.apiUrl, { params });
+  if (filters) {
+    if (filters.tipo) params = params.set('tipo', filters.tipo);
+    if (filters.estado) params = params.set('estado', filters.estado);
+    if (filters.upcoming !== undefined) params = params.set('upcoming', filters.upcoming.toString());
+    if (filters.page) params = params.set('page', filters.page.toString());
+    if (filters.limit) params = params.set('limit', filters.limit.toString());
+
+    // ▼▼▼ ESTO ES LO QUE FALTABA ▼▼▼
+    if (filters.fecha_inicio) params = params.set('fecha_inicio', filters.fecha_inicio);
+    if (filters.fecha_fin) params = params.set('fecha_fin', filters.fecha_fin);
   }
+
+  return this.http.get<ActivityListResponse>(this.apiUrl, { params });
+}
 
   getActivityById(id: number): Observable<{ activity: Activity }> {
     return this.http.get<{ activity: Activity }>(`${this.apiUrl}/${id}`);
   }
 
-  createActivity(data: CreateActivityData): Observable<{ message: string; activity: Activity }> {
+  createActivity(data: any): Observable<{ message: string; activity: Activity }> {
     return this.http.post<{ message: string; activity: Activity }>(this.apiUrl, data);
   }
 
-  updateActivity(id: number, data: Partial<CreateActivityData & {
-    estado?: 'Programada' | 'En Curso' | 'Completada' | 'Cancelada';
-  }>): Observable<{ message: string; activity: Activity }> {
+  updateActivity(id: number, data: any): Observable<{ message: string; activity: Activity }> {
     return this.http.put<{ message: string; activity: Activity }>(`${this.apiUrl}/${id}`, data);
   }
 

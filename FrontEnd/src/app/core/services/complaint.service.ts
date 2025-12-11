@@ -21,7 +21,7 @@ export interface Complaint {
 }
 
 export interface ComplaintListResponse {
-  data: Complaint[];
+  data: Complaint[]; // ✅ CORRECCIÓN: El backend devuelve la lista en 'data'
   total: number;
   pages: number;
   currentPage: number;
@@ -70,8 +70,8 @@ export class ComplaintService {
     return this.http.get<ComplaintListResponse>(this.apiUrl, { params });
   }
 
-  getComplaintById(id: number): Observable<Complaint> {
-    return this.http.get<Complaint>(`${this.apiUrl}/${id}`);
+  getComplaintById(id: number): Observable<{ complaint: Complaint }> { // ✅ CORRECCIÓN: Envuelve el objeto de respuesta
+    return this.http.get<{ complaint: Complaint }>(`${this.apiUrl}/${id}`);
   }
 
   createComplaint(data: CreateComplaintData): Observable<{ message: string; complaint: Complaint }> {

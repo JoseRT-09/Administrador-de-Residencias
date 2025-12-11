@@ -19,7 +19,7 @@ import { GetAllResidencesUseCase } from '../../../domain/use-cases/residence/get
 import { ServiceCost, ServiceCostPeriod, ServiceCostStatus } from '../../../domain/models/service-cost.model';
 import { Residence } from '../../../domain/models/residence.model';
 import { NotificationService } from '../../../core/services/notification.service';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
 @Component({
   selector: 'app-service-cost-form',
   standalone: true,
@@ -36,7 +36,8 @@ import { NotificationService } from '../../../core/services/notification.service
     MatProgressSpinnerModule,
     MatDividerModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatTooltipModule
   ],
   templateUrl: './service-cost-form.component.html',
   styleUrls: ['./service-cost-form.component.scss']

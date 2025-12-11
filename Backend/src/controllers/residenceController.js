@@ -276,8 +276,8 @@ exports.assignResident = async (req, res) => {
       residente_nuevo_id: nuevoResidenteId,
       tipo_cambio: tipo_cambio || 'Asignacion',
       motivo: motivo || 'Asignación de residente',
-      notas,
-      autorizado_por: req.user.id
+      autorizado_por: req.user.id,
+      notas
     });
 
     // Actualizar residencia

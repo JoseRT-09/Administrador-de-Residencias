@@ -19,10 +19,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatBadgeModule } from '@angular/material/badge';
-import { GetAllComplaintsUseCase } from '../../../domain/use-cases/complaint/get-all-complaints.usecase';
-import { UpdateComplaintUseCase } from '../../../domain/use-cases/complaint/update-complaint.usecase';
-import { DeleteComplaintUseCase } from '../../../domain/use-cases/complaint/delete-complaint.usecase';
-import { Complaint, ComplaintStatus, ComplaintCategory, ComplaintPriority } from '../../../domain/models/complaint.model';
+import { ComplaintService } from '../../../core/services/complaint.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
@@ -58,9 +55,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
   styleUrls: ['./complaint-list.component.scss']
 })
 export class ComplaintListComponent implements OnInit {
-  private getAllComplaints = inject(GetAllComplaintsUseCase);
-  private updateComplaint = inject(UpdateComplaintUseCase);
-  private deleteComplaint = inject(DeleteComplaintUseCase);
+  private complaintService = inject(ComplaintService);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
@@ -68,14 +63,9 @@ export class ComplaintListComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  // Exponer enums al template
-  ComplaintStatus = ComplaintStatus;
-  ComplaintCategory = ComplaintCategory;
-  ComplaintPriority = ComplaintPriority;
-
   displayedColumns: string[] = ['asunto', 'categoria', 'prioridad', 'usuario', 'residencia', 'estado', 'fecha', 'acciones'];
-  dataSource = new MatTableDataSource<Complaint>();
-  
+  dataSource = new MatTableDataSource<any>();
+
   filterForm!: FormGroup;
   isLoading = true;
   totalComplaints = 0;
@@ -84,32 +74,34 @@ export class ComplaintListComponent implements OnInit {
 
   estados = [
     { value: '', label: 'Todos los estados' },
-    { value: ComplaintStatus.NUEVO, label: 'Nuevo' },
-    { value: ComplaintStatus.REVISADO, label: 'Revisado' },
-    { value: ComplaintStatus.EN_PROCESO, label: 'En Proceso' },
-    { value: ComplaintStatus.RESUELTO, label: 'Resuelto' }
+    { value: 'Nueva', label: 'Nueva' },
+    { value: 'En Revisión', label: 'En Revisión' },
+    { value: 'En Proceso', label: 'En Proceso' },
+    { value: 'Resuelta', label: 'Resuelta' },
+    { value: 'Cerrada', label: 'Cerrada' },
+    { value: 'Rechazada', label: 'Rechazada' }
   ];
 
   categorias = [
     { value: '', label: 'Todas las categorías' },
-    { value: ComplaintCategory.RUIDO, label: 'Ruido' },
-    { value: ComplaintCategory.CONVIVENCIA, label: 'Convivencia' },
-    { value: ComplaintCategory.MASCOTAS, label: 'Mascotas' },
-    { value: ComplaintCategory.ESTACIONAMIENTO, label: 'Estacionamiento' },
-    { value: ComplaintCategory.AREAS_COMUNES, label: 'Áreas Comunes' },
-    { value: ComplaintCategory.LIMPIEZA, label: 'Limpieza' },
-    { value: ComplaintCategory.SEGURIDAD, label: 'Seguridad' },
-    { value: ComplaintCategory.MANTENIMIENTO, label: 'Mantenimiento' },
-    { value: ComplaintCategory.ADMINISTRACION, label: 'Administración' },
-    { value: ComplaintCategory.OTRO, label: 'Otro' }
+    { value: 'Ruido', label: 'Ruido' },
+    { value: 'Convivencia', label: 'Convivencia' },
+    { value: 'Mascotas', label: 'Mascotas' },
+    { value: 'Estacionamiento', label: 'Estacionamiento' },
+    { value: 'Áreas Comunes', label: 'Áreas Comunes' },
+    { value: 'Limpieza', label: 'Limpieza' },
+    { value: 'Seguridad', label: 'Seguridad' },
+    { value: 'Mantenimiento', label: 'Mantenimiento' },
+    { value: 'Administración', label: 'Administración' },
+    { value: 'Otro', label: 'Otro' }
   ];
 
   prioridades = [
     { value: '', label: 'Todas las prioridades' },
-    { value: ComplaintPriority.BAJA, label: 'Baja' },
-    { value: ComplaintPriority.MEDIA, label: 'Media' },
-    { value: ComplaintPriority.ALTA, label: 'Alta' },
-    { value: ComplaintPriority.URGENTE, label: 'Urgente' }
+    { value: 'Baja', label: 'Baja' },
+    { value: 'Media', label: 'Media' },
+    { value: 'Alta', label: 'Alta' },
+    { value: 'Urgente', label: 'Urgente' }
   ];
 
   ngOnInit(): void {
@@ -157,7 +149,7 @@ export class ComplaintListComponent implements OnInit {
     if (filters.fecha_inicio) params.fecha_inicio = filters.fecha_inicio;
     if (filters.fecha_fin) params.fecha_fin = filters.fecha_fin;
 
-    this.getAllComplaints.execute(params).subscribe({
+    this.complaintService.getAllComplaints(params).subscribe({
       next: (response) => {
         this.dataSource.data = response.data;
         this.totalComplaints = response.total;
@@ -187,8 +179,11 @@ export class ComplaintListComponent implements OnInit {
     });
   }
 
-  changeStatus(complaint: Complaint, newStatus: ComplaintStatus): void {
-    this.updateComplaint.execute(complaint.id, { estado: newStatus }).subscribe({
+  changeStatus(
+    complaint: any,
+    newStatus: 'Nueva' | 'En Revisión' | 'En Proceso' | 'Resuelta' | 'Cerrada' | 'Rechazada' | undefined
+  ): void {
+    this.complaintService.updateComplaint(complaint.id, { estado: newStatus }).subscribe({
       next: () => {
         this.notificationService.success('Estado actualizado correctamente');
         this.loadComplaints();
@@ -199,9 +194,9 @@ export class ComplaintListComponent implements OnInit {
     });
   }
 
-  onDelete(complaint: Complaint): void {
+  onDelete(complaint: any): void {
     if (confirm(`¿Estás seguro de eliminar la queja "${complaint.asunto}"?`)) {
-      this.deleteComplaint.execute(complaint.id).subscribe({
+      this.complaintService.deleteComplaint(complaint.id).subscribe({
         next: () => {
           this.notificationService.success('Queja eliminada correctamente');
           this.loadComplaints();
@@ -213,79 +208,83 @@ export class ComplaintListComponent implements OnInit {
     }
   }
 
-  getStatusClass(status: ComplaintStatus): string {
-    const statusMap: Record<ComplaintStatus, string> = {
-      [ComplaintStatus.NUEVO]: 'status-new',
-      [ComplaintStatus.REVISADO]: 'status-reviewed',
-      [ComplaintStatus.EN_PROCESO]: 'status-in-progress',
-      [ComplaintStatus.RESUELTO]: 'status-resolved'
+  getStatusClass(status: string): string {
+    const statusMap: Record<string, string> = {
+      'Nueva': 'status-new',
+      'En Revisión': 'status-reviewed',
+      'En Proceso': 'status-in-progress',
+      'Resuelta': 'status-resolved',
+      'Cerrada': 'status-closed',
+      'Rechazada': 'status-rejected'
     };
-    return statusMap[status];
+    return statusMap[status] || 'status-default';
   }
 
-  getStatusIcon(status: ComplaintStatus): string {
-    const iconMap: Record<ComplaintStatus, string> = {
-      [ComplaintStatus.NUEVO]: 'fiber_new',
-      [ComplaintStatus.REVISADO]: 'visibility',
-      [ComplaintStatus.EN_PROCESO]: 'pending',
-      [ComplaintStatus.RESUELTO]: 'check_circle'
+  getStatusIcon(status: string): string {
+    const iconMap: Record<string, string> = {
+      'Nueva': 'fiber_new',
+      'En Revisión': 'rate_review',
+      'En Proceso': 'sync',
+      'Resuelta': 'check_circle',
+      'Cerrada': 'archive',
+      'Rechazada': 'block'
     };
-    return iconMap[status];
+    return iconMap[status] || 'help_outline';
   }
 
-  getCategoryClass(category: ComplaintCategory): string {
-    const categoryMap: Record<ComplaintCategory, string> = {
-      [ComplaintCategory.RUIDO]: 'category-noise',
-      [ComplaintCategory.CONVIVENCIA]: 'category-coexistence',
-      [ComplaintCategory.MASCOTAS]: 'category-pets',
-      [ComplaintCategory.ESTACIONAMIENTO]: 'category-parking',
-      [ComplaintCategory.AREAS_COMUNES]: 'category-common-areas',
-      [ComplaintCategory.LIMPIEZA]: 'category-cleaning',
-      [ComplaintCategory.SEGURIDAD]: 'category-security',
-      [ComplaintCategory.MANTENIMIENTO]: 'category-maintenance',
-      [ComplaintCategory.ADMINISTRACION]: 'category-administration',
-      [ComplaintCategory.OTRO]: 'category-other'
+  getCategoryClass(category: string): string {
+    const categoryMap: Record<string, string> = {
+      'Ruido': 'category-noise',
+      'Convivencia': 'category-coexistence',
+      'Mascotas': 'category-pets',
+      'Estacionamiento': 'category-parking',
+      'Áreas Comunes': 'category-common-areas',
+      'Limpieza': 'category-cleaning',
+      'Seguridad': 'category-security',
+      'Mantenimiento': 'category-maintenance',
+      'Administración': 'category-administration',
+      'Otro': 'category-other'
     };
-    return categoryMap[category];
+    return categoryMap[category] || 'category-default';
   }
 
-  getCategoryIcon(category: ComplaintCategory): string {
-    const iconMap: Record<ComplaintCategory, string> = {
-      [ComplaintCategory.RUIDO]: 'volume_up',
-      [ComplaintCategory.CONVIVENCIA]: 'group',
-      [ComplaintCategory.MASCOTAS]: 'pets',
-      [ComplaintCategory.ESTACIONAMIENTO]: 'local_parking',
-      [ComplaintCategory.AREAS_COMUNES]: 'apartment',
-      [ComplaintCategory.LIMPIEZA]: 'cleaning_services',
-      [ComplaintCategory.SEGURIDAD]: 'security',
-      [ComplaintCategory.MANTENIMIENTO]: 'build',
-      [ComplaintCategory.ADMINISTRACION]: 'admin_panel_settings',
-      [ComplaintCategory.OTRO]: 'help_outline'
+  getCategoryIcon(category: string): string {
+    const iconMap: Record<string, string> = {
+      'Ruido': 'volume_up',
+      'Convivencia': 'groups',
+      'Mascotas': 'pets',
+      'Estacionamiento': 'local_parking',
+      'Áreas Comunes': 'domain',
+      'Limpieza': 'cleaning_services',
+      'Seguridad': 'security',
+      'Mantenimiento': 'build',
+      'Administración': 'admin_panel_settings',
+      'Otro': 'help_outline'
     };
-    return iconMap[category];
+    return iconMap[category] || 'help_outline';
   }
 
-  getPriorityClass(priority: ComplaintPriority): string {
-    const priorityMap: Record<ComplaintPriority, string> = {
-      [ComplaintPriority.BAJA]: 'priority-low',
-      [ComplaintPriority.MEDIA]: 'priority-medium',
-      [ComplaintPriority.ALTA]: 'priority-high',
-      [ComplaintPriority.URGENTE]: 'priority-urgent'
+  getPriorityClass(priority: string): string {
+    const priorityMap: Record<string, string> = {
+      'Baja': 'priority-low',
+      'Media': 'priority-medium',
+      'Alta': 'priority-high',
+      'Urgente': 'priority-urgent'
     };
-    return priorityMap[priority];
+    return priorityMap[priority] || 'priority-default';
   }
 
-  getPriorityIcon(priority: ComplaintPriority): string {
-    const iconMap: Record<ComplaintPriority, string> = {
-      [ComplaintPriority.BAJA]: 'arrow_downward',
-      [ComplaintPriority.MEDIA]: 'remove',
-      [ComplaintPriority.ALTA]: 'arrow_upward',
-      [ComplaintPriority.URGENTE]: 'priority_high'
+  getPriorityIcon(priority: string): string {
+    const iconMap: Record<string, string> = {
+      'Baja': 'arrow_downward',
+      'Media': 'remove',
+      'Alta': 'arrow_upward',
+      'Urgente': 'priority_high'
     };
-    return iconMap[priority];
+    return iconMap[priority] || 'help_outline';
   }
 
-  getUserName(complaint: Complaint): string {
+  getUserName(complaint: any): string {
     if (complaint.es_anonima || complaint.es_anonimo) {
       return 'Usuario Anónimo';
     }
@@ -294,7 +293,7 @@ export class ComplaintListComponent implements OnInit {
     return `${user.nombre} ${user.apellido}`;
   }
 
-  getUserInitials(complaint: Complaint): string {
+  getUserInitials(complaint: any): string {
     if (complaint.es_anonima || complaint.es_anonimo) {
       return 'AN';
     }
@@ -303,9 +302,9 @@ export class ComplaintListComponent implements OnInit {
     return `${user.nombre.charAt(0)}${user.apellido.charAt(0)}`.toUpperCase();
   }
 
-  canEdit(complaint: Complaint): boolean {
+  canEdit(complaint: any): boolean {
     if (!this.authService.isAdmin()) return false;
-    return complaint.estado === ComplaintStatus.NUEVO;
+    return complaint.estado === 'Nueva';
   }
 
   canDelete(): boolean {
@@ -317,20 +316,20 @@ export class ComplaintListComponent implements OnInit {
   }
 
   getNewCount(): number {
-    return this.dataSource.data.filter(c => c.estado === ComplaintStatus.NUEVO).length;
+    return this.dataSource.data.filter(c => c.estado === 'Nueva').length;
   }
 
   getInProcessCount(): number {
-    return this.dataSource.data.filter(c => 
-      c.estado === ComplaintStatus.REVISADO || c.estado === ComplaintStatus.EN_PROCESO
+    return this.dataSource.data.filter(c =>
+      c.estado === 'En Revisión' || c.estado === 'En Proceso'
     ).length;
   }
 
   getResolvedCount(): number {
-    return this.dataSource.data.filter(c => c.estado === ComplaintStatus.RESUELTO).length;
+    return this.dataSource.data.filter(c => c.estado === 'Resuelta').length;
   }
 
   getUrgentCount(): number {
-    return this.dataSource.data.filter(c => c.prioridad === ComplaintPriority.URGENTE).length;
+    return this.dataSource.data.filter(c => c.prioridad === 'Urgente').length;
   }
 }

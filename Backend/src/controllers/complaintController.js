@@ -49,7 +49,8 @@ exports.getAllComplaints = async (req, res) => {
         {
           model: Residence,
           as: 'residencia',
-          attributes: ['id', 'numero_unidad', 'bloque', 'tipo_residencia']
+          // ✅ CORRECCIÓN DE COLUMNA: Usar tipo_propiedad
+          attributes: ['id', 'numero_unidad', 'bloque', 'tipo_propiedad']
         }
       ],
       limit: parseInt(limit),
@@ -60,7 +61,6 @@ exports.getAllComplaints = async (req, res) => {
     // Ocultar información del usuario si es anónimo
     const complaintsFormatted = rows.map(complaint => {
       const complaintObj = complaint.toJSON();
-      // Asegurarse de que req.user exista antes de acceder a req.user.rol
       const userRole = req.user ? req.user.rol : null;
       if (complaintObj.es_anonima && userRole === 'Residente') {
         complaintObj.usuario = { id: null, nombre: 'Anónimo', apellido: null, email: null, telefono: null };
@@ -94,7 +94,8 @@ exports.getComplaintById = async (req, res) => {
         {
           model: Residence,
           as: 'residencia',
-          attributes: ['id', 'numero_unidad', 'bloque', 'piso', 'tipo_residencia']
+          // ✅ CORRECCIÓN DE COLUMNA: Usar tipo_propiedad
+          attributes: ['id', 'numero_unidad', 'bloque', 'piso', 'tipo_propiedad']
         }
       ]
     });
@@ -105,7 +106,6 @@ exports.getComplaintById = async (req, res) => {
 
     const complaintObj = complaint.toJSON();
     
-    // Ocultar información del usuario si es anónimo y el usuario no es administrador
     const userRole = req.user ? req.user.rol : null;
     if (complaintObj.es_anonima && 
         userRole !== 'SuperAdmin' && 
@@ -113,7 +113,7 @@ exports.getComplaintById = async (req, res) => {
       complaintObj.usuario = { id: null, nombre: 'Anónimo', apellido: null, email: null, telefono: null };
     }
 
-    res.json(complaintObj);
+    res.json({ complaint: complaintObj });
   } catch (error) {
     console.error('Error al obtener queja:', error);
     res.status(500).json({ message: 'Error al obtener queja', error: error.message });
@@ -240,37 +240,72 @@ exports.updateComplaint = async (req, res) => {
   }
 };
 
-// Implementación de la ruta faltante para responder a una queja
-exports.respondToComplaint = async (req, res) => {
+// FUNCIÓN REQUERIDA por la ruta PATCH /:id/status
+exports.updateComplaintStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { respuesta, estado } = req.body;
+    const { estado } = req.body; 
 
     const complaint = await Complaint.findByPk(id);
     if (!complaint) {
       return res.status(404).json({ message: 'Queja no encontrada' });
     }
     
-    // Aquí se debería integrar la lógica para enviar la respuesta (ej. por email)
+    if (!estado) {
+        return res.status(400).json({ message: 'El campo estado es requerido para actualizar el estado.' });
+    }
 
     await complaint.update({
-        estado: estado || ESTADOS_QUEJA.EN_REVISION,
-        // En un modelo real, añadiríamos un campo de historial o respuesta.
-        // Por ahora, actualizamos el estado y retornamos.
+        estado: estado,
     });
 
     const updatedComplaint = await Complaint.findByPk(id);
 
     res.json({
-      message: 'Respuesta registrada y estado actualizado.',
+      message: 'Estado de la queja actualizado exitosamente.',
       complaint: updatedComplaint
     });
 
   } catch (error) {
-    console.error('Error al responder a la queja:', error);
-    res.status(500).json({ message: 'Error al responder a la queja', error: error.message });
+    console.error('Error al actualizar estado de la queja:', error);
+    res.status(500).json({ message: 'Error al actualizar estado de la queja', error: error.message });
   }
 };
+
+// FUNCIÓN REQUERIDA por la ruta GET /statistics/summary
+exports.getComplaintsStatistics = async (req, res) => {
+  try {
+    const total = await Complaint.count();
+    
+    const statusSummary = await Complaint.findAll({
+      attributes: [
+        'estado',
+        [Complaint.sequelize.fn('COUNT', Complaint.sequelize.col('estado')), 'count']
+      ],
+      group: ['estado'],
+      raw: true
+    });
+
+    const prioritySummary = await Complaint.findAll({
+      attributes: [
+        'prioridad',
+        [Complaint.sequelize.fn('COUNT', Complaint.sequelize.col('prioridad')), 'count']
+      ],
+      group: ['prioridad'],
+      raw: true
+    });
+
+    res.json({
+      totalComplaints: total,
+      statusSummary,
+      prioritySummary,
+    });
+  } catch (error) {
+    console.error('Error al obtener estadísticas de quejas:', error);
+    res.status(500).json({ message: 'Error al obtener estadísticas de quejas', error: error.message });
+  }
+};
+
 
 // Obtener quejas por usuario
 exports.getComplaintsByUser = async (req, res) => {

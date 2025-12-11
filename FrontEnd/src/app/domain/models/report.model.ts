@@ -2,10 +2,10 @@ import { Residence } from './residence.model';
 import { User } from './user.model';
 
 export enum ReportType {
-  INCENDIO = 'Incendio',
-  ELECTRICO = 'Eléctrico',
-  AGUA = 'Agua',
-  ROBO = 'Robo',
+  MANTENIMIENTO = 'Mantenimiento', // ✅ CORRECCIÓN: Nombres de reporte del backend
+  LIMPIEZA = 'Limpieza',
+  SEGURIDAD = 'Seguridad',
+  INSTALACIONES = 'Instalaciones',
   OTRO = 'Otro'
 }
 
@@ -16,18 +16,13 @@ export enum ReportPriority {
   CRITICA = 'Crítica'
 }
 
-export enum ReportStatus {
-  ABIERTO = 'Abierto',
-  EN_PROGRESO = 'En Progreso',
-  RESUELTO = 'Resuelto',
-  CERRADO = 'Cerrado'
-}
+export type ReportStatus = 'Abierto' | 'En Progreso' | 'Resuelto' | 'Cerrado';
 
 export interface Report {
   id: number;
   tipo: ReportType;
   residencia_id?: number;
-  reportado_por?: number;  // Es number según el backend
+  reportado_por_id?: number;  // ✅ CORRECCIÓN: Usar snake_case ID (el backend lo devuelve)
   titulo: string;
   descripcion: string;
   prioridad: ReportPriority;
@@ -40,7 +35,7 @@ export interface Report {
   // Relaciones (pueden venir del backend con includes)
   Residence?: Residence;
   residencia?: Residence;  // Alias
-  reportadoPor?: User;
+  reportadoPor?: User; // ✅ Campo correcto (soluciona el error de casing)
   asignadoA?: User;
 }
 
@@ -56,7 +51,7 @@ export interface UpdateReportDto {
   titulo?: string;
   descripcion?: string;
   prioridad?: ReportPriority;
-  estado?: ReportStatus;
+  estado?: string | ReportStatus;
   asignado_a?: number;
 }
 

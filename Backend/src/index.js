@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const { sequelize } = require('./models');
+const db = require('./models'); // Importación necesaria para inicializar modelos
+const { sequelize } = db; // Solo necesitamos sequelize para el punto de entrada
 require('dotenv').config();
 
 const app = express();
@@ -12,8 +13,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
 });
 
 // Rutas
@@ -29,60 +30,56 @@ app.use('/api/amenities', require('./routes/amenities'));
 
 // Ruta de prueba
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'API de Administración de Residencias',
-    version: '1.0.0',
-    endpoints: {
-      auth: '/api/auth',
-      users: '/api/users',
-      residences: '/api/residences',
-      serviceCosts: '/api/service-costs',
-      payments: '/api/payments',
-      reports: '/api/reports',
-      complaints: '/api/complaints',
-      activities: '/api/activities',
-      amenities: '/api/amenities'
-    }
-  });
+  res.json({ 
+    message: 'API de Administración de Residencias',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      users: '/api/users',
+      residences: '/api/residences',
+      serviceCosts: '/api/service-costs',
+      payments: '/api/payments',
+      reports: '/api/reports',
+      complaints: '/api/complaints',
+      activities: '/api/activities',
+      amenities: '/api/amenities'
+    }
+  });
 });
 
 // Ruta para verificar salud del servidor
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+  res.json({ 
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 // Manejo de errores 404
 app.use((req, res) => {
-  res.status(404).json({ message: 'Ruta no encontrada' });
+  res.status(404).json({ message: 'Ruta no encontrada' });
 });
 
 // Manejo de errores global
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    message: err.message || 'Error interno del servidor',
-    error: process.env.NODE_ENV === 'development' ? err : {}
-  });
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    message: err.message || 'Error interno del servidor',
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
 });
 
 // Sincronizar base de datos y arrancar servidor
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ alter: true })
-  .then(() => {
-    console.log('✅ Base de datos sincronizada');
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-      console.log(`📝 Documentación de API disponible en http://localhost:${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('❌ Error al sincronizar base de datos:', err);
-    process.exit(1);
-  });
+// ❌ Se ELIMINA el bloque sequelize.sync() o User.sync(), etc.
+// El esquema ahora se gestiona con comandos CLI de migraciones.
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`📝 Documentación de API disponible en http://localhost:${PORT}`);
+  console.log('⚠️  ¡Advertencia! La sincronización de la DB debe hacerse con migraciones ahora.');
+});
 
 module.exports = app;

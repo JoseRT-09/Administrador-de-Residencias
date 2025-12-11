@@ -18,7 +18,6 @@ import { GetReassignmentHistoryUseCase } from '../../../domain/use-cases/residen
 import { Residence, ResidenceStatus, ReassignmentHistory } from '../../../domain/models/residence.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
 
 @Component({
   selector: 'app-residence-detail',
@@ -36,8 +35,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatMenuModule,
-    MatTableModule,
-    TimeAgoPipe
+    MatTableModule
   ],
   templateUrl: './residence-detail.component.html',
   styleUrls: ['./residence-detail.component.scss']
@@ -98,13 +96,18 @@ export class ResidenceDetailComponent implements OnInit {
     this.isLoadingHistory = true;
 
     this.getReassignmentHistory.execute(this.residenceId).subscribe({
-      next: (history) => {
-        this.reassignmentHistory = history;
-        this.stats[1].value = history.length;
+      next: (historyResponse: any) => {
+        // ✅ CORRECCIÓN: Inicializar como array vacío si la respuesta es undefined/null
+        this.reassignmentHistory = Array.isArray(historyResponse) 
+          ? historyResponse
+          : historyResponse || []; 
+        this.stats[1].value = this.reassignmentHistory.length;
         this.isLoadingHistory = false;
       },
       error: (error) => {
         console.error('Error loading history:', error);
+        // Si falla el historial, establecemos a un array vacío para evitar que la app crashe
+        this.reassignmentHistory = [];
         this.isLoadingHistory = false;
       }
     });

@@ -11,8 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { GetAmenityByIdUseCase } from '../../../domain/use-cases/amenity/get-amenity-by-id.usecase';
-import { Amenity } from '../../../domain/models/amenity.model';
+import { AmenityService, Amenity } from '../../../core/services/amenity.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -32,7 +31,7 @@ export class AmenityBookingComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private getAmenityById = inject(GetAmenityByIdUseCase);
+  private amenityService = inject(AmenityService);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
 
@@ -41,6 +40,7 @@ export class AmenityBookingComponent implements OnInit {
   isLoading = true;
   isSaving = false;
   amenityId!: number;
+  minDate = new Date();
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -54,31 +54,29 @@ export class AmenityBookingComponent implements OnInit {
   }
 
   initForm(): void {
-    const currentUser = this.authService.getCurrentUser();
-    
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     this.bookingForm = this.fb.group({
-      amenidad_id: [this.amenityId, [Validators.required]],
-      usuario_id: [currentUser?.id, [Validators.required]],
-      fecha_inicio: [new Date(), [Validators.required]],
-      fecha_fin: [new Date(), [Validators.required]],
-      num_personas: [1, [Validators.required, Validators.min(1)]],
-      proposito: ['', [Validators.required, Validators.minLength(10)]],
-      notas: ['']
+      fecha_reserva: [today, [Validators.required]],
+      hora_inicio: ['', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
+      hora_fin: ['', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
+      notas: ['', [Validators.maxLength(500)]]
     });
   }
 
   loadAmenity(): void {
     this.isLoading = true;
-    this.getAmenityById.execute(this.amenityId).subscribe({
-      next: (amenity) => {
-        this.amenity = amenity;
-        
-        const disponible = amenity.disponible_reserva ?? amenity.requiere_reserva;
-        if (!disponible) {
+    this.amenityService.getAmenityById(this.amenityId).subscribe({
+      next: (response) => {
+        this.amenity = response.amenity;
+
+        if (this.amenity.estado === 'En Mantenimiento' || this.amenity.estado === 'Fuera de Servicio') {
           this.notificationService.warning('Esta amenidad no está disponible para reservas');
           this.router.navigate(['/amenities', this.amenityId]);
         }
-        
+
         this.isLoading = false;
       },
       error: (error) => {
@@ -94,20 +92,25 @@ export class AmenityBookingComponent implements OnInit {
       this.isSaving = true;
       const formData = { ...this.bookingForm.value };
 
-      // Convertir fechas a ISO string
-      if (formData.fecha_inicio instanceof Date) {
-        formData.fecha_inicio = formData.fecha_inicio.toISOString();
-      }
-      if (formData.fecha_fin instanceof Date) {
-        formData.fecha_fin = formData.fecha_fin.toISOString();
+      // Convertir fecha a formato YYYY-MM-DD
+      if (formData.fecha_reserva instanceof Date) {
+        const year = formData.fecha_reserva.getFullYear();
+        const month = String(formData.fecha_reserva.getMonth() + 1).padStart(2, '0');
+        const day = String(formData.fecha_reserva.getDate()).padStart(2, '0');
+        formData.fecha_reserva = `${year}-${month}-${day}`;
       }
 
-      // Simular creación de reserva
-      setTimeout(() => {
-        this.notificationService.success('Reserva creada correctamente');
-        this.router.navigate(['/amenities', this.amenityId]);
-        this.isSaving = false;
-      }, 1500);
+      this.amenityService.reserveAmenity(this.amenityId, formData).subscribe({
+        next: (response) => {
+          this.notificationService.success('Reserva creada correctamente');
+          this.router.navigate(['/amenities']);
+          this.isSaving = false;
+        },
+        error: (error) => {
+          this.notificationService.error(error.error?.message || 'Error al crear reserva');
+          this.isSaving = false;
+        }
+      });
     } else {
       this.markFormGroupTouched(this.bookingForm);
       this.notificationService.warning('Por favor, completa todos los campos requeridos');
@@ -118,9 +121,13 @@ export class AmenityBookingComponent implements OnInit {
     this.router.navigate(['/amenities', this.amenityId]);
   }
 
+  isAdminOrSuperAdmin(): boolean {
+    return this.authService.isAdmin() || this.authService.isSuperAdmin();
+  }
+
   getCosto(): number {
     if (!this.amenity) return 0;
-    return this.amenity.costo_reserva ?? this.amenity.costo_uso ?? 0;
+    return this.amenity.costo || this.amenity.costo_por_hora || 0;
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -131,11 +138,11 @@ export class AmenityBookingComponent implements OnInit {
 
   getErrorMessage(fieldName: string): string {
     const control = this.bookingForm.get(fieldName);
-    
+
     if (control?.hasError('required')) {
       return 'Este campo es requerido';
     }
-    
+
     if (control?.hasError('minlength')) {
       const minLength = control.errors?.['minlength'].requiredLength;
       return `Mínimo ${minLength} caracteres`;
@@ -144,7 +151,7 @@ export class AmenityBookingComponent implements OnInit {
     if (control?.hasError('min')) {
       return 'Debe ser al menos 1 persona';
     }
-    
+
     return '';
   }
 }

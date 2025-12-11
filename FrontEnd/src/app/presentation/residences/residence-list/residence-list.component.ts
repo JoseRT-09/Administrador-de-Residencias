@@ -15,14 +15,13 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { GetAllResidencesUseCase } from '../../../domain/use-cases/residence/get-all-residences.usecase';
-import { DeleteResidenceUseCase } from '../../../domain/use-cases/residence/delete-residence.usecase';
-import { Residence, ResidenceStatus } from '../../../domain/models/residence.model';
+import { ResidenceService } from '../../../core/services/residence.service';
+import { ResidenceStatus } from '../../../domain/models/residence.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MatDividerModule } from '@angular/material/divider';
-import { FilterPipe } from '@shared/pipes';
+import { FilterPipe } from '../../../shared/pipes/filter.pipe';
 
 @Component({
   selector: 'app-residence-list',
@@ -51,8 +50,7 @@ import { FilterPipe } from '@shared/pipes';
   styleUrls: ['./residence-list.component.scss']
 })
 export class ResidenceListComponent implements OnInit {
-  private getAllResidences = inject(GetAllResidencesUseCase);
-  private deleteResidence = inject(DeleteResidenceUseCase);
+  private residenceService = inject(ResidenceService);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
@@ -61,8 +59,8 @@ export class ResidenceListComponent implements OnInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   displayedColumns: string[] = ['numero_unidad', 'bloque', 'piso', 'area_m2', 'dueno', 'residente_actual', 'estado', 'acciones'];
-  dataSource = new MatTableDataSource<Residence>();
-  
+  dataSource = new MatTableDataSource<any>();
+
   filterForm!: FormGroup;
   isLoading = true;
   totalResidences = 0;
@@ -71,9 +69,9 @@ export class ResidenceListComponent implements OnInit {
 
   estados = [
     { value: '', label: 'Todos los estados' },
-    { value: ResidenceStatus.OCUPADA, label: 'Ocupada' },
-    { value: ResidenceStatus.DISPONIBLE, label: 'Disponible' },
-    { value: ResidenceStatus.MANTENIMIENTO, label: 'Mantenimiento' }
+    { value: 'Ocupada', label: 'Ocupada' },
+    { value: 'Disponible', label: 'Disponible' },
+    { value: 'Mantenimiento', label: 'Mantenimiento' }
   ];
 
   ngOnInit(): void {
@@ -115,7 +113,7 @@ export class ResidenceListComponent implements OnInit {
     if (filters.bloque) params.bloque = filters.bloque;
     if (filters.search) params.search = filters.search;
 
-    this.getAllResidences.execute(params).subscribe({
+    this.residenceService.getAllResidences(params).subscribe({
       next: (response) => {
         this.dataSource.data = response.data;
         this.totalResidences = response.total;
@@ -142,9 +140,9 @@ export class ResidenceListComponent implements OnInit {
     });
   }
 
-  onDelete(residence: Residence): void {
+  onDelete(residence: any): void {
     if (confirm(`¿Estás seguro de eliminar la residencia ${residence.numero_unidad}?`)) {
-      this.deleteResidence.execute(residence.id).subscribe({
+      this.residenceService.deleteResidence(residence.id).subscribe({
         next: () => {
           this.notificationService.success('Residencia eliminada correctamente');
           this.loadResidences();
@@ -174,14 +172,14 @@ export class ResidenceListComponent implements OnInit {
     return iconMap[status];
   }
 
-  getResidentName(residence: Residence): string {
+  getResidentName(residence: any): string {
     if (residence.residenteActual) {
       return `${residence.residenteActual.nombre} ${residence.residenteActual.apellido}`;
     }
     return 'Sin asignar';
   }
 
-  getOwnerName(residence: Residence): string {
+  getOwnerName(residence: any): string {
     if (residence.dueno) {
       return `${residence.dueno.nombre} ${residence.dueno.apellido}`;
     }

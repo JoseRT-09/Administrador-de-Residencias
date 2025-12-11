@@ -15,10 +15,6 @@
           <mat-icon>add</mat-icon>
           Nueva Queja
         </button>
-        <button mat-stroked-button (click)="exportToCSV()">
-          <mat-icon>download</mat-icon>
-          Exportar
-        </button>
       </div>
     </div>
   </div>
@@ -103,7 +99,7 @@
       </div>
     </div>
     <div class="stat-item new">
-      <mat-icon [matBadge]="getNewCount()" matBadgeColor="warn">fiber_new</mat-icon>
+      <mat-icon [matBadge]="getNewCount()" matBadgeColor="warn" aria-hidden="false">fiber_new</mat-icon>
       <div class="stat-content">
         <span class="stat-value">{{ getNewCount() }}</span>
         <span class="stat-label">Nuevas</span>
@@ -117,7 +113,7 @@
       </div>
     </div>
     <div class="stat-item urgent">
-      <mat-icon [matBadge]="getUrgentCount()" matBadgeColor="warn">priority_high</mat-icon>
+      <mat-icon [matBadge]="getUrgentCount()" matBadgeColor="warn" aria-hidden="false">priority_high</mat-icon>
       <div class="stat-content">
         <span class="stat-value">{{ getUrgentCount() }}</span>
         <span class="stat-label">Urgentes</span>
@@ -254,21 +250,21 @@
               </button>
 
               <mat-menu #statusMenu="matMenu">
-                <button mat-menu-item (click)="changeStatus(complaint, ComplaintStatus.NUEVO)">
+                <button mat-menu-item (click)="changeStatus(complaint, 'Nueva')">
                   <mat-icon>fiber_new</mat-icon>
-                  <span>Nuevo</span>
+                  <span>Nueva</span>
                 </button>
-                <button mat-menu-item (click)="changeStatus(complaint, ComplaintStatus.REVISADO)">
+                <button mat-menu-item (click)="changeStatus(complaint, 'En Revisión')">
                   <mat-icon>rate_review</mat-icon>
-                  <span>Revisado</span>
+                  <span>En Revisión</span>
                 </button>
-                <button mat-menu-item (click)="changeStatus(complaint, ComplaintStatus.EN_PROCESO)">
+                <button mat-menu-item (click)="changeStatus(complaint, 'En Proceso')">
                   <mat-icon>sync</mat-icon>
                   <span>En Proceso</span>
                 </button>
-                <button mat-menu-item (click)="changeStatus(complaint, ComplaintStatus.RESUELTO)">
+                <button mat-menu-item (click)="changeStatus(complaint, 'Resuelta')">
                   <mat-icon>check_circle</mat-icon>
-                  <span>Resuelto</span>
+                  <span>Resuelta</span>
                 </button>
               </mat-menu>
 
@@ -305,11 +301,11 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr 
-          mat-row 
+        <tr
+          mat-row
           *matRowDef="let row; columns: displayedColumns;"
           class="table-row"
-          [class.urgent-row]="row.prioridad === ComplaintPriority.URGENTE"
+          [class.urgent-row]="row.prioridad === 'Urgente'"
         ></tr>
 
         <!-- No Data Row -->

@@ -109,7 +109,7 @@
     <div class="stat-item paid">
       <mat-icon>check_circle</mat-icon>
       <div class="stat-content">
-        <span class="stat-value">{{ (dataSource.data | filter: 'estado' : 'Pagado').length }}</span>
+        <span class="stat-value">{{ getPaidCount() }}</span>
         <span class="stat-label">Pagados</span>
       </div>
     </div>

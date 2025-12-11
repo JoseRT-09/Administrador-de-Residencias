@@ -1,3 +1,4 @@
+// Frontend/src/app/presentation/reports/report-detail/report-detail.component.ts (CORREGIDO)
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
@@ -39,7 +40,7 @@ import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
     MatFormFieldModule,
     MatInputModule,
     MatTabsModule,
-    TimeAgoPipe
+    TimeAgoPipe 
   ],
   templateUrl: './report-detail.component.html',
   styleUrls: ['./report-detail.component.scss']
@@ -83,6 +84,7 @@ export class ReportDetailComponent implements OnInit {
   loadReport(): void {
     this.isLoading = true;
     
+    // El useCase debe devolver el objeto desempaquetado si el service lo devuelve envuelto { report: Report }
     this.getReportById.execute(this.reportId).subscribe({
       next: (report) => {
         this.report = report;
@@ -120,7 +122,7 @@ export class ReportDetailComponent implements OnInit {
     }
   }
 
-  changeStatus(newStatus: ReportStatus): void {
+  changeStatus(newStatus: string): void {
     if (!this.report) return;
 
     this.updateReport.execute(this.reportId, { estado: newStatus }).subscribe({
@@ -156,45 +158,47 @@ export class ReportDetailComponent implements OnInit {
   }
 
   getTypeClass(type: ReportType): string {
+    // ✅ CORRECCIÓN: Usar los tipos de reporte definidos en el enum ReportType
     const typeMap: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: 'type-fire',
-      [ReportType.ELECTRICO]: 'type-electric',
-      [ReportType.AGUA]: 'type-water',
-      [ReportType.ROBO]: 'type-theft',
+      [ReportType.MANTENIMIENTO]: 'type-maintenance',
+      [ReportType.LIMPIEZA]: 'type-cleaning',
+      [ReportType.SEGURIDAD]: 'type-security',
+      [ReportType.INSTALACIONES]: 'type-installations',
       [ReportType.OTRO]: 'type-other'
     };
     return typeMap[type] || 'type-other';
   }
 
   getTypeIcon(type: ReportType): string {
+    // ✅ CORRECCIÓN: Usar los tipos de reporte definidos en el enum ReportType
     const iconMap: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: 'local_fire_department',
-      [ReportType.ELECTRICO]: 'flash_on',
-      [ReportType.AGUA]: 'water_drop',
-      [ReportType.ROBO]: 'security',
+      [ReportType.MANTENIMIENTO]: 'build',
+      [ReportType.LIMPIEZA]: 'cleaning_services',
+      [ReportType.SEGURIDAD]: 'security',
+      [ReportType.INSTALACIONES]: 'devices',
       [ReportType.OTRO]: 'help_outline'
     };
     return iconMap[type] || 'help_outline';
   }
 
   getStatusClass(status: ReportStatus): string {
-    const statusMap: Record<ReportStatus, string> = {
-      [ReportStatus.ABIERTO]: 'status-open',
-      [ReportStatus.EN_PROGRESO]: 'status-progress',
-      [ReportStatus.RESUELTO]: 'status-resolved',
-      [ReportStatus.CERRADO]: 'status-closed'
+    const statusMap: { [key: string]: string } = {
+      'Abierto': 'status-open',
+      'En Progreso': 'status-progress',
+      'Resuelto': 'status-resolved',
+      'Cerrado': 'status-closed'
     };
-    return statusMap[status];
+    return statusMap[status] || 'status-default';
   }
 
   getStatusIcon(status: ReportStatus): string {
-    const iconMap: Record<ReportStatus, string> = {
-      [ReportStatus.ABIERTO]: 'error_outline',
-      [ReportStatus.EN_PROGRESO]: 'sync',
-      [ReportStatus.RESUELTO]: 'check_circle',
-      [ReportStatus.CERRADO]: 'archive'
+    const iconMap: Record<string, string> = {
+      'Abierto': 'error_outline',
+      'En Progreso': 'sync',
+      'Resuelto': 'check_circle',
+      'Cerrado': 'archive'
     };
-    return iconMap[status];
+    return iconMap[status] || 'help_outline';
   }
 
   getPriorityClass(priority: ReportPriority): string {
@@ -229,11 +233,12 @@ export class ReportDetailComponent implements OnInit {
   canEdit(): boolean {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser || !this.report) return false;
-    
+
     if (this.authService.isAdmin()) return true;
-    
-    return this.report.reportado_por === currentUser.id && 
-           this.report.estado === ReportStatus.ABIERTO;
+
+    // ✅ CORRECCIÓN: Usar el campo ID (reportado_por_id) para la comparación
+    return this.report.reportado_por_id === currentUser.id && 
+           this.report.estado === 'Abierto';
   }
 
   canDelete(): boolean {

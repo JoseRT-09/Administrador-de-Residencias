@@ -12,6 +12,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 import { GetAllActivitiesUseCase } from '../../../domain/use-cases/activity/get-all-activities.usecase';
 import { Activity, ActivityType, ActivityStatus } from '../../../domain/models/activity.model';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -45,10 +46,10 @@ interface CalendarDay {
   styleUrls: ['./activity-calendar.component.scss']
 })
 export class ActivityCalendarComponent implements OnInit {
+
   private getAllActivities = inject(GetAllActivitiesUseCase);
   private notificationService = inject(NotificationService);
 
-  // Exponer enums al template
   ActivityType = ActivityType;
   ActivityStatus = ActivityStatus;
 
@@ -59,131 +60,207 @@ export class ActivityCalendarComponent implements OnInit {
   activities: Activity[] = [];
   isLoading = true;
 
-  weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-
-  viewMode: 'month' | 'week' | 'day' = 'month';
+  weekDays = ['Dom', 'Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b'];
 
   constructor() {
-    this.currentMonth = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+    this.currentMonth = new Date(
+      this.currentDate.getFullYear(),
+      this.currentDate.getMonth(),
+      1
+    );
   }
 
   ngOnInit(): void {
     this.loadActivities();
   }
 
+  /** Convert JS Date â†’ yyyy-MM-dd */
+  private formatDateYMD(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  /** LOAD ACTIVITIES FROM BACKEND */
   loadActivities(): void {
     this.isLoading = true;
 
     const startOfMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth(), 1);
     const endOfMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 0);
 
-    this.getAllActivities.execute({
+    const params = {
       page: 1,
       limit: 1000,
-      fecha_inicio: startOfMonth.toISOString(),
-      fecha_fin: endOfMonth.toISOString()
-    }).subscribe({
+      fecha_inicio: this.formatDateYMD(startOfMonth),
+      fecha_fin: this.formatDateYMD(endOfMonth)
+    };
+
+    console.log("ðŸ“¤ Enviando rango al backend:", params);
+
+    this.getAllActivities.execute(params).subscribe({
       next: (response) => {
-        this.activities = response.data;
+
+        console.log("ðŸ“¥ RAW backend response:", response);
+
+if (!response) {
+  console.error("âŒ Backend no enviÃ³ respuesta");
+}
+
+if (!response.data) {
+  console.error(
+    "âŒ 'data' viene undefined. Backend deberÃ­a enviar un array. Respuesta recibida:",
+    JSON.stringify(response, null, 2)
+  );
+} else if (!Array.isArray(response.data)) {
+  console.error(
+    "âŒ 'data' existe pero NO es un array. Tipo recibido:",
+    typeof response.data,
+    "valor:",
+    response.data
+  );
+} else {
+  console.log("ðŸ“Œ Actividades recibidas:", response.data.length);
+}
+
+        const raw = Array.isArray(response.data) ? response.data : [];
+
+        console.log(`ðŸ“Œ Total actividades recibidas: ${raw.length}`);
+
+        this.activities = raw.map(a => {
+          const parsed = {
+            ...a,
+            fecha_inicio: new Date(a.fecha_inicio),
+            fecha_fin: a.fecha_fin ? new Date(a.fecha_fin) : null
+          };
+
+          console.log("â± Actividad parseada:", parsed);
+
+          return parsed;
+        });
+
         this.generateCalendar();
         this.isLoading = false;
       },
-      error: (error) => {
+      error: err => {
+        console.error("âŒ Error cargando actividades:", err);
         this.notificationService.error('Error al cargar actividades');
         this.isLoading = false;
       }
     });
   }
 
+  /** GENERATE 42 DAYS GRID */
   generateCalendar(): void {
+    console.log("ðŸ“… Generando calendario...");
+
     const year = this.currentMonth.getFullYear();
     const month = this.currentMonth.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
+
     const firstDayOfWeek = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
-    
+
+    console.log(`ðŸ“… Mes actual ${month + 1}/${year} â†’ ${daysInMonth} dÃ­as`);
+
     this.calendarDays = [];
-    
-    // Días del mes anterior
+
+    /** PREVIOUS MONTH DAYS */
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const date = new Date(year, month - 1, prevMonthLastDay - i);
-      this.calendarDays.push({
-        date,
-        isCurrentMonth: false,
-        isToday: this.isToday(date),
-        activities: this.getActivitiesForDate(date)
-      });
+      this.pushDay(date, false);
     }
-    
-    // Días del mes actual
+
+    /** CURRENT MONTH DAYS */
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      this.calendarDays.push({
-        date,
-        isCurrentMonth: true,
-        isToday: this.isToday(date),
-        activities: this.getActivitiesForDate(date)
-      });
+      this.pushDay(date, true);
     }
-    
-    // Días del mes siguiente para completar la última semana
-    const remainingDays = 42 - this.calendarDays.length; // 6 semanas * 7 días
-    for (let day = 1; day <= remainingDays; day++) {
-      const date = new Date(year, month + 1, day);
-      this.calendarDays.push({
-        date,
-        isCurrentMonth: false,
-        isToday: this.isToday(date),
-        activities: this.getActivitiesForDate(date)
-      });
+
+    /** NEXT MONTH DAYS */
+    const remaining = 42 - this.calendarDays.length;
+    for (let i = 1; i <= remaining; i++) {
+      const date = new Date(year, month + 1, i);
+      this.pushDay(date, false);
     }
+
+    console.log(`ðŸ“Œ Total dÃ­as generados: ${this.calendarDays.length}`);
   }
 
-  getActivitiesForDate(date: Date): Activity[] {
-    return this.activities.filter(activity => {
-      const activityDate = new Date(activity.fecha_inicio);
-      return activityDate.getDate() === date.getDate() &&
-             activityDate.getMonth() === date.getMonth() &&
-             activityDate.getFullYear() === date.getFullYear();
+  /** PUSH ONE DAY INTO GRID */
+  private pushDay(date: Date, isCurrentMonth: boolean) {
+    const acts = this.getActivitiesForDate(date);
+
+    console.log(`ðŸ“† DÃ­a ${date.toDateString()} â†’ ${acts.length} actividades`);
+
+    this.calendarDays.push({
+      date,
+      isCurrentMonth,
+      isToday: this.isToday(date),
+      activities: acts
     });
   }
 
-  isToday(date: Date): boolean {
-    const today = new Date();
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
+  /** FILTER ACTIVITIES FOR SPECIFIC DATE */
+  getActivitiesForDate(date: Date): Activity[] {
+    return this.activities.filter(activity => {
+      const start = new Date(activity.fecha_inicio);
+      const end = activity.fecha_fin ? new Date(activity.fecha_fin) : start;
+
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+
+      return date >= start && date <= end;
+    });
   }
 
+  /** TODAY DETECTOR */
+  isToday(date: Date): boolean {
+    const today = new Date();
+    return date.getDate() === today.getDate()
+      && date.getMonth() === today.getMonth()
+      && date.getFullYear() === today.getFullYear();
+  }
+
+  /** NAVIGATION */
   previousMonth(): void {
-    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() - 1,
+      1
+    );
     this.loadActivities();
   }
 
   nextMonth(): void {
-    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 1);
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      1
+    );
     this.loadActivities();
   }
 
   goToToday(): void {
-    this.currentMonth = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+    this.currentMonth = new Date(
+      this.currentDate.getFullYear(),
+      this.currentDate.getMonth(),
+      1
+    );
     this.loadActivities();
   }
 
+  /** CLICK DAY */
   selectDate(day: CalendarDay): void {
     this.selectedDate = day.date;
   }
 
-  getMonthYear(): string {
-    return this.currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-  }
-
+  /** UI HELPERS */
   getTypeClass(type: ActivityType): string {
-    const typeMap: Record<ActivityType, string> = {
+    const map: Record<ActivityType, string> = {
       [ActivityType.REUNION]: 'type-meeting',
       [ActivityType.EVENTO]: 'type-event',
       [ActivityType.MANTENIMIENTO]: 'type-maintenance',
@@ -191,11 +268,11 @@ export class ActivityCalendarComponent implements OnInit {
       [ActivityType.CELEBRACION]: 'type-celebration',
       [ActivityType.OTRO]: 'type-other'
     };
-    return typeMap[type];
+    return map[type];
   }
 
   getTypeIcon(type: ActivityType): string {
-    const iconMap: Record<ActivityType, string> = {
+    const map: Record<ActivityType, string> = {
       [ActivityType.REUNION]: 'group',
       [ActivityType.EVENTO]: 'event',
       [ActivityType.MANTENIMIENTO]: 'build',
@@ -203,25 +280,30 @@ export class ActivityCalendarComponent implements OnInit {
       [ActivityType.CELEBRACION]: 'celebration',
       [ActivityType.OTRO]: 'event_note'
     };
-    return iconMap[type];
+    return map[type];
   }
 
+  /** TODAY ACTIVITIES */
+  getTodayActivities(): Activity[] {
+    return this.getActivitiesForDate(new Date());
+  }
+
+  /** UPCOMING ACTIVITIES */
   getUpcomingActivities(): Activity[] {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     return this.activities
-      .filter(activity => {
-        const activityDate = new Date(activity.fecha_inicio);
-        activityDate.setHours(0, 0, 0, 0);
-        return activityDate >= today;
-      })
+      .filter(a => new Date(a.fecha_inicio) >= today)
       .sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime())
       .slice(0, 5);
   }
 
-  getTodayActivities(): Activity[] {
-    const today = new Date();
-    return this.getActivitiesForDate(today);
+  /** MONTH TITLE */
+  getMonthYear(): string {
+    return this.currentMonth.toLocaleDateString('es-ES', {
+      month: 'long',
+      year: 'numeric'
+    });
   }
 }

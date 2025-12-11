@@ -1,0 +1,383 @@
+// service-cost-form.component.scss
+.container {
+  padding: 24px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 70px);
+  margin-top: 70px;
+  margin-left: 260px;
+  transition: margin-left 0.3s ease;
+
+  @media (max-width: 960px) {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+mat-card {
+  margin: 20px 0;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  animation: fadeInUp 0.6s ease;
+  overflow: hidden;
+
+  mat-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 32px 24px;
+    margin: -16px -16px 24px -16px;
+
+    mat-card-title {
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+    }
+
+    mat-card-subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 15px;
+      margin: 0;
+    }
+  }
+
+  mat-card-content {
+    padding: 24px;
+  }
+}
+
+// Grid System
+.grid {
+  display: grid;
+
+  &.grid-cols-1 {
+    grid-template-columns: 1fr;
+  }
+
+  &.grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &.md\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.gap-4 {
+  gap: 1.5rem;
+}
+
+// Flexbox Utilities
+.flex {
+  display: flex;
+
+  &.justify-center {
+    justify-content: center;
+  }
+
+  &.justify-end {
+    justify-content: flex-end;
+  }
+
+  &.space-x-3 > * + * {
+    margin-left: 0.75rem;
+  }
+}
+
+// Spacing Utilities
+.py-8 {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.my-4 {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+// Loading Spinner
+.flex.justify-center.py-8 {
+  mat-progress-spinner {
+    ::ng-deep circle {
+      stroke: #667eea;
+    }
+  }
+}
+
+// Form Styles
+form {
+  animation: fadeIn 0.4s ease;
+
+  mat-form-field {
+    width: 100%;
+    transition: all 0.3s ease;
+
+    &.md\:col-span-2 {
+      grid-column: span 2 / span 2;
+
+      @media (max-width: 768px) {
+        grid-column: span 1 / span 1;
+      }
+    }
+
+    // Material Icons in form fields
+    mat-icon {
+      color: #667eea;
+    }
+
+    // Input focus effects
+    ::ng-deep {
+      .mat-mdc-form-field-focus-overlay {
+        background-color: rgba(102, 126, 234, 0.05);
+      }
+
+      .mat-mdc-text-field-wrapper.mdc-text-field--focused {
+        .mat-mdc-form-field-flex {
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading,
+            .mdc-notched-outline__notch,
+            .mdc-notched-outline__trailing {
+              border-color: #667eea !important;
+              border-width: 2px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Select Dropdown
+  mat-select {
+    mat-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  // Textarea
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  // Hints and Errors
+  mat-hint {
+    font-size: 12px;
+    color: #999;
+  }
+
+  mat-error {
+    font-size: 12px;
+    font-weight: 500;
+    animation: shake 0.3s ease;
+  }
+}
+
+// Divider
+mat-divider {
+  border-top-color: rgba(102, 126, 234, 0.1);
+}
+
+// Buttons
+button {
+  transition: all 0.3s ease;
+  font-weight: 600;
+  border-radius: 12px;
+  height: 44px;
+  padding: 0 24px;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+
+  &[mat-flat-button] {
+    &[color="primary"] {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+
+      &:hover:not(:disabled) {
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: #ccc;
+        box-shadow: none;
+      }
+    }
+  }
+
+  &[mat-stroked-button] {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: white;
+
+    &:hover:not(:disabled) {
+      background: rgba(102, 126, 234, 0.05);
+      border-color: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+}
+
+// Button Container
+.flex.justify-end.space-x-3 {
+  padding-top: 16px;
+  margin-top: 24px;
+  border-top: 1px solid #f0f0f0;
+
+  @media (max-width: 768px) {
+    flex-direction: column-reverse;
+    gap: 12px;
+
+    button {
+      width: 100%;
+      margin-left: 0 !important;
+    }
+  }
+}
+
+// Datepicker Customization
+::ng-deep {
+  .mat-datepicker-content {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .mat-calendar-body-selected {
+    background-color: #667eea;
+  }
+
+  .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+    border-color: #667eea;
+  }
+}
+
+// Tooltip Customization
+::ng-deep {
+  .mat-mdc-tooltip {
+    background: #333;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  mat-card {
+    mat-card-header {
+      padding: 24px 16px;
+
+      mat-card-title {
+        font-size: 24px;
+      }
+
+      mat-card-subtitle {
+        font-size: 14px;
+      }
+    }
+
+    mat-card-content {
+      padding: 16px;
+    }
+  }
+
+  .gap-4 {
+    gap: 1rem;
+  }
+}
+
+// Animations
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+// Shadow and hover effects
+.shadow-lg {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+}
+
+// Text colors (Tailwind-like)
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-gray-800 {
+  color: #2d3748;
+}

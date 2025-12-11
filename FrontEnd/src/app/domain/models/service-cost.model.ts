@@ -15,8 +15,9 @@ export enum ServiceCostStatus {
 export interface ServiceCost {
   id: number;
   nombre_servicio: string;
-  concepto: string; 
+  concepto: string;
   descripcion?: string;
+  notas?: string;
   monto: number;
   periodo: ServiceCostPeriod;
   residencia_id?: number;
@@ -24,7 +25,7 @@ export interface ServiceCost {
   fecha_vencimiento: Date | string;
   estado: ServiceCostStatus;
   created_at?: Date;
-  
+
   // Relaciones
   Residence?: Residence;
   residencia?: Residence;

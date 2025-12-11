@@ -59,7 +59,6 @@ export class UserDetailComponent implements OnInit {
   isLoading = true;
   userId!: number;
 
-  // Datos de ejemplo para el perfil completo
   activityLogs: ActivityLog[] = [
     {
       id: 1,
@@ -93,8 +92,6 @@ export class UserDetailComponent implements OnInit {
   stats = [
     { label: 'Pagos Realizados', value: 12, icon: 'payments', color: '#4caf50' },
     { label: 'Reportes Creados', value: 3, icon: 'report', color: '#f44336' },
-    { label: 'Actividades', value: 8, icon: 'event', color: '#ff9800' },
-    { label: 'Meses Activo', value: 6, icon: 'schedule', color: '#667eea' }
   ];
 
   ngOnInit(): void {

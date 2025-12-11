@@ -1,4 +1,3 @@
-// Backend/src/models/Residence.js (CORREGIDO COMPLETO)
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -38,11 +37,9 @@ const Residence = sequelize.define('Residence', {
     defaultValue: 0
   },
 
-  // Tipo de propiedad y precio
   tipo_propiedad: {
     type: DataTypes.ENUM('Renta', 'Compra'),
     allowNull: true,
-    comment: 'Tipo de propiedad: Renta o Compra'
   },
   precio: {
     type: DataTypes.DECIMAL(12, 2),

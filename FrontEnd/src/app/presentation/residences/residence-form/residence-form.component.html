@@ -176,6 +176,58 @@
           </div>
         </div>
 
+        <!-- Información Comercial -->
+        <div class="form-section">
+          <div class="section-header">
+            <mat-icon>attach_money</mat-icon>
+            <h2>Información Comercial</h2>
+          </div>
+          <mat-divider></mat-divider>
+
+          <div class="form-grid">
+            <!-- Tipo de Propiedad -->
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de Propiedad (Opcional)</mat-label>
+              <mat-select formControlName="tipo_propiedad">
+                <mat-option [value]="null">Sin especificar</mat-option>
+                <mat-option *ngFor="let tipo of tiposPropiedad" [value]="tipo.value">
+                  <div class="select-option">
+                    <mat-icon>{{ tipo.icon }}</mat-icon>
+                    <div class="option-content">
+                      <span class="option-label">{{ tipo.label }}</span>
+                      <span class="option-description">{{ tipo.description }}</span>
+                    </div>
+                  </div>
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-hint>Indica si es para renta o compra</mat-hint>
+            </mat-form-field>
+
+            <!-- Precio -->
+            <mat-form-field appearance="outline">
+              <mat-label>{{ getPrecioLabel() }} (Opcional)</mat-label>
+              <input
+                matInput
+                type="number"
+                step="0.01"
+                formControlName="precio"
+                placeholder="15000.00"
+              >
+              <mat-icon matPrefix>payments</mat-icon>
+              <span matSuffix>$</span>
+              <mat-hint>
+                {{ residenceForm.get('tipo_propiedad')?.value === 'Renta' ? 'Monto mensual de renta' :
+                   residenceForm.get('tipo_propiedad')?.value === 'Compra' ? 'Precio de venta' :
+                   'Precio según tipo de propiedad' }}
+              </mat-hint>
+              <mat-error *ngIf="residenceForm.get('precio')?.invalid">
+                {{ getErrorMessage('precio') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
         <!-- Asignaciones -->
         <div class="form-section">
           <div class="section-header">

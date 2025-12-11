@@ -1,79 +1,232 @@
-// Backend/src/models/index.js (VERSIÓN FINAL CON CORRECCIONES PREVIAS Y DE CLAVE)
+// Backend/src/models/index.js (CORREGIDO COMPLETO)
 const sequelize = require('../config/database');
+
+// ===== IMPORTAR TODOS LOS MODELOS =====
 const User = require('./User');
 const Residence = require('./Residence');
-const ServiceCost = require('./ServiceCost');
-const Payment = require('./Payment');
-const Report = require('./Report');
-const Complaint = require('./Complaint');
+const ReassignmentHistory = require('./ReassignmentHistory');
 const Activity = require('./Activity');
 const Amenity = require('./Amenity');
 const AmenityReservation = require('./AmenityReservation');
-const ReassignmentHistory = require('./ReassignmentHistory');
+const Report = require('./Report');
+const Complaint = require('./Complaint');
+const Payment = require('./Payment');
+const ServiceCost = require('./ServiceCost');
 
-// Relaciones User - Residence
-Residence.belongsTo(User, { as: 'dueno', foreignKey: 'dueno_id' });
-Residence.belongsTo(User, { as: 'residenteActual', foreignKey: 'residente_actual_id' });
-Residence.belongsTo(User, { as: 'administrador', foreignKey: 'administrador_id' });
+// Verificar que todos los modelos se cargaron correctamente
+if (!User) {
+  throw new Error('Error: User no se cargó correctamente');
+}
+if (!Activity) {
+  throw new Error('Error: Activity no se cargó correctamente');
+}
+if (!Amenity) {
+  throw new Error('Error: Amenity no se cargó correctamente');
+}
+if (!AmenityReservation) {
+  throw new Error('Error: AmenityReservation no se cargó correctamente');
+}
 
-User.hasMany(Residence, { as: 'residenciasPropiedad', foreignKey: 'dueno_id' });
-User.hasMany(Residence, { as: 'residenciaActual', foreignKey: 'residente_actual_id' });
-User.hasMany(Residence, { as: 'residenciasAdministradas', foreignKey: 'administrador_id' });
+// Verificar que los modelos tienen los métodos necesarios de Sequelize
+if (typeof Activity.hasMany !== 'function') {
+  console.error('ERROR: Activity no es un modelo Sequelize válido');
+  console.error('Tipo de Activity:', typeof Activity);
+  console.error('Activity:', Activity);
+  console.error('Propiedades de Activity:', Object.keys(Activity));
+  throw new Error('Activity no tiene el método hasMany. Verifica que sequelize.define() funcione correctamente.');
+}
+if (typeof Amenity.hasMany !== 'function') {
+  console.error('ERROR: Amenity no es un modelo Sequelize válido');
+  console.error('Tipo de Amenity:', typeof Amenity);
+  console.error('Amenity:', Amenity);
+  console.error('Propiedades de Amenity:', Object.keys(Amenity));
+  throw new Error('Amenity no tiene el método hasMany. Verifica que sequelize.define() funcione correctamente.');
+}
+if (typeof User.hasMany !== 'function') {
+  throw new Error('User no es un modelo Sequelize válido');
+}
 
-// Relaciones ServiceCost
-ServiceCost.belongsTo(Residence, { foreignKey: 'residencia_id' });
-Residence.hasMany(ServiceCost, { foreignKey: 'residencia_id' });
+// ===== DEFINIR ASOCIACIONES =====
+// ===== RELACIONES DE RESIDENCE =====
 
-// Relaciones Payment
-Payment.belongsTo(User, { as: 'residente', foreignKey: 'residente_id' });
-Payment.belongsTo(ServiceCost, { as: 'servicioCosto', foreignKey: 'servicio_costo_id' });
+// Residence - Dueño
+Residence.belongsTo(User, {
+  foreignKey: 'dueno_id',
+  as: 'dueno'
+});
+User.hasMany(Residence, {
+  foreignKey: 'dueno_id',
+  as: 'residenciasComodueno'
+});
 
-User.hasMany(Payment, { foreignKey: 'residente_id' });
-ServiceCost.hasMany(Payment, { foreignKey: 'servicio_costo_id' });
+// Residence - Residente Actual
+Residence.belongsTo(User, {
+  foreignKey: 'residente_actual_id',
+  as: 'residenteActual'
+});
+User.hasMany(Residence, {
+  foreignKey: 'residente_actual_id',
+  as: 'residenciasComoResidente'
+});
 
-// Relaciones Report 
-Report.belongsTo(Residence, { foreignKey: 'residencia_id' });
-Report.belongsTo(User, { as: 'reportadoPor', foreignKey: 'reportado_por_id' }); 
-Report.belongsTo(User, { as: 'asignadoA', foreignKey: 'asignado_a' });
+// Residence - Administrador
+Residence.belongsTo(User, {
+  foreignKey: 'administrador_id',
+  as: 'administrador'
+});
+User.hasMany(Residence, {
+  foreignKey: 'administrador_id',
+  as: 'residenciasComoAdministrador'
+});
 
-Residence.hasMany(Report, { foreignKey: 'residencia_id' });
-User.hasMany(Report, { as: 'reportesCreados', foreignKey: 'reportado_por_id' }); 
-User.hasMany(Report, { as: 'reportesAsignados', foreignKey: 'asignado_a' });
+// ===== RELACIONES DE REASSIGNMENT HISTORY =====
 
-// Relaciones Complaint 
-Complaint.belongsTo(User, { as: 'usuario', foreignKey: 'usuario_id' }); 
-Complaint.belongsTo(Residence, { as: 'residencia', foreignKey: 'residenciclsa_id' }); 
-User.hasMany(Complaint, { as: 'quejasCreadas', foreignKey: 'usuario_id' }); 
+ReassignmentHistory.belongsTo(Residence, {
+  foreignKey: 'residencia_id',
+  as: 'residencia'
+});
+Residence.hasMany(ReassignmentHistory, {
+  foreignKey: 'residencia_id',
+  as: 'historialReasignaciones'
+});
 
-// Relaciones Activity
-Activity.belongsTo(User, { as: 'organizador', foreignKey: 'organizador_id' });
-User.hasMany(Activity, { as: 'actividadesOrganizadas', foreignKey: 'organizador_id' });
+ReassignmentHistory.belongsTo(User, {
+  foreignKey: 'residente_anterior_id',
+  as: 'residenteAnterior'
+});
 
-// Relaciones AmenityReservation
-AmenityReservation.belongsTo(Amenity, { foreignKey: 'amenidad_id' });
-AmenityReservation.belongsTo(User, { as: 'residente', foreignKey: 'residente_id' });
+ReassignmentHistory.belongsTo(User, {
+  foreignKey: 'residente_nuevo_id',
+  as: 'residenteNuevo'
+});
 
-Amenity.hasMany(AmenityReservation, { foreignKey: 'amenidad_id' });
-User.hasMany(AmenityReservation, { foreignKey: 'residente_id' });
+ReassignmentHistory.belongsTo(User, {
+  foreignKey: 'autorizado_por',
+  as: 'autorizadoPor'
+});
 
-// Relaciones ReassignmentHistory
-ReassignmentHistory.belongsTo(Residence, { foreignKey: 'residencia_id' });
-ReassignmentHistory.belongsTo(User, { as: 'residenteAnterior', foreignKey: 'residente_anterior_id' });
-ReassignmentHistory.belongsTo(User, { as: 'residenteNuevo', foreignKey: 'residente_nuevo_id' });
-ReassignmentHistory.belongsTo(User, { as: 'autorizadoPor', foreignKey: 'autorizado_por' });
+// ===== RELACIONES DE ACTIVITY =====
 
-Residence.hasMany(ReassignmentHistory, { foreignKey: 'residencia_id' });
+User.hasMany(Activity, {
+  foreignKey: 'organizador_id',
+  as: 'actividadesOrganizadas'
+});
+Activity.belongsTo(User, {
+  foreignKey: 'organizador_id',
+  as: 'organizador'
+});
 
+// ===== RELACIONES DE AMENITY =====
+
+Amenity.hasMany(AmenityReservation, {
+  foreignKey: 'amenidad_id',
+  as: 'reservas'
+});
+AmenityReservation.belongsTo(Amenity, {
+  foreignKey: 'amenidad_id',
+  as: 'amenidad'
+});
+
+User.hasMany(AmenityReservation, {
+  foreignKey: 'usuario_id',
+  as: 'reservasAmenidades'
+});
+AmenityReservation.belongsTo(User, {
+  foreignKey: 'usuario_id',
+  as: 'usuario'
+});
+
+// ===== RELACIONES DE REPORT =====
+
+User.hasMany(Report, {
+  foreignKey: 'reportado_por_id',
+  as: 'reportesCreados'
+});
+Report.belongsTo(User, {
+  foreignKey: 'reportado_por_id',
+  as: 'reportadoPor'
+});
+
+User.hasMany(Report, {
+  foreignKey: 'asignado_a',
+  as: 'reportesAsignados'
+});
+Report.belongsTo(User, {
+  foreignKey: 'asignado_a',
+  as: 'asignadoA'
+});
+
+Residence.hasMany(Report, {
+  foreignKey: 'residencia_id',
+  as: 'reportes'
+});
+Report.belongsTo(Residence, {
+  foreignKey: 'residencia_id',
+  as: 'residencia'
+});
+
+// ===== RELACIONES DE COMPLAINT =====
+
+User.hasMany(Complaint, {
+  foreignKey: 'usuario_id',
+  as: 'quejas'
+});
+Complaint.belongsTo(User, {
+  foreignKey: 'usuario_id',
+  as: 'usuario'
+});
+
+Residence.hasMany(Complaint, {
+  foreignKey: 'residencia_id',
+  as: 'quejas'
+});
+Complaint.belongsTo(Residence, {
+  foreignKey: 'residencia_id',
+  as: 'residencia'
+});
+
+// ===== RELACIONES DE PAYMENT =====
+
+User.hasMany(Payment, {
+  foreignKey: 'residente_id',
+  as: 'pagos'
+});
+Payment.belongsTo(User, {
+  foreignKey: 'residente_id',
+  as: 'residente'
+});
+
+ServiceCost.hasMany(Payment, {
+  foreignKey: 'servicio_costo_id',
+  as: 'pagos'
+});
+Payment.belongsTo(ServiceCost, {
+  foreignKey: 'servicio_costo_id',
+  as: 'servicioCosto'
+});
+
+// ===== RELACIONES DE SERVICE COST =====
+
+Residence.hasMany(ServiceCost, {
+  foreignKey: 'residencia_id',
+  as: 'costos'
+});
+ServiceCost.belongsTo(Residence, {
+  foreignKey: 'residencia_id',
+  as: 'residencia'
+});
+
+// Exportar modelos
 module.exports = {
-  sequelize, // EXPORTADO
+  sequelize,
   User,
   Residence,
-  ServiceCost,
-  Payment,
-  Report,
-  Complaint,
+  ReassignmentHistory,
   Activity,
   Amenity,
   AmenityReservation,
-  ReassignmentHistory
+  Report,
+  Complaint,
+  Payment,
+  ServiceCost
 };

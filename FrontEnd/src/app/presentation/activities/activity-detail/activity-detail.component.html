@@ -11,7 +11,7 @@
           <mat-icon>event</mat-icon>
           Detalle de la Actividad
         </h1>
-        <p class="page-subtitle">Información completa de la actividad</p>
+        <p class="page-subtitle">InformaciÃ³n completa de la actividad</p>
       </div>
 
       <div class="header-actions" *ngIf="activity">
@@ -50,7 +50,7 @@
   <!-- Loading State -->
   <div class="loading-container" *ngIf="isLoading">
     <mat-spinner diameter="50"></mat-spinner>
-    <p>Cargando información de la actividad...</p>
+    <p>Cargando informaciÃ³n de la actividad...</p>
   </div>
 
   <!-- Activity Detail Content -->
@@ -90,7 +90,7 @@
       <div class="description-section">
         <h3>
           <mat-icon>description</mat-icon>
-          Descripción
+          DescripciÃ³n
         </h3>
         <p>{{ activity.descripcion }}</p>
       </div>
@@ -123,7 +123,7 @@
             <div class="detail-item" *ngIf="activity.fecha_fin">
               <mat-icon>schedule</mat-icon>
               <div>
-                <span class="detail-label">Duración</span>
+                <span class="detail-label">DuraciÃ³n</span>
                 <span class="detail-value">{{ getDuration() }}</span>
               </div>
             </div>
@@ -134,7 +134,7 @@
         <div class="detail-card">
           <h4>
             <mat-icon>location_on</mat-icon>
-            Ubicación
+            UbicaciÃ³n
           </h4>
           <div class="location-info">
             <mat-icon>place</mat-icon>
@@ -176,7 +176,7 @@
               <mat-icon>group</mat-icon>
               <div>
                 <span class="count-label">Confirmados</span>
-                <span class="count-value">{{ getConfirmedCount() }} / {{ activity.max_participantes || '∞' }}</span>
+                <span class="count-value">{{ getConfirmedCount() }} / {{ activity.max_participantes || 'âˆž' }}</span>
               </div>
             </div>
           </div>
@@ -225,7 +225,7 @@
 
             <div class="no-participants" *ngIf="participants.length === 0">
               <mat-icon>people_outline</mat-icon>
-              <p>No hay participantes registrados aún</p>
+              <p>No hay participantes registrados aÃºn</p>
             </div>
           </div>
         </mat-tab>
@@ -268,7 +268,7 @@
     <mat-card class="metadata-card no-print">
       <h3>
         <mat-icon>info</mat-icon>
-        Información del Sistema
+        InformaciÃ³n del Sistema
       </h3>
       <mat-divider></mat-divider>
 
@@ -282,7 +282,7 @@
           <span class="metadata-value">{{ activity.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
         </div>
         <div class="metadata-item">
-          <span class="metadata-label">Última Actualización:</span>
+          <span class="metadata-label">Ãšltima ActualizaciÃ³n:</span>
           <span class="metadata-value">{{ activity.updated_at | date:'dd/MM/yyyy HH:mm' }}</span>
         </div>
       </div>

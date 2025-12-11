@@ -55,11 +55,11 @@ export class ActivityDetailComponent implements OnInit {
   isLoading = true;
   activityId!: number;
 
-  // Mock data para participantes (en una implementación real vendría del backend)
+  // Mock data para participantes (en una implementaciÃ³n real vendrÃ­a del backend)
   participants = [
-    { id: 1, nombre: 'Juan', apellido: 'Pérez', email: 'juan@email.com', confirmado: true },
-    { id: 2, nombre: 'María', apellido: 'García', email: 'maria@email.com', confirmado: true },
-    { id: 3, nombre: 'Carlos', apellido: 'López', email: 'carlos@email.com', confirmado: false }
+    { id: 1, nombre: 'Juan', apellido: 'PÃ©rez', email: 'juan@email.com', confirmado: true },
+    { id: 2, nombre: 'MarÃ­a', apellido: 'GarcÃ­a', email: 'maria@email.com', confirmado: true },
+    { id: 3, nombre: 'Carlos', apellido: 'LÃ³pez', email: 'carlos@email.com', confirmado: false }
   ];
 
   ngOnInit(): void {
@@ -96,7 +96,7 @@ export class ActivityDetailComponent implements OnInit {
     if (!this.activity) return;
 
     const confirmed = confirm(
-      `¿Estás seguro de eliminar la actividad "${this.activity.titulo}"?\n\nEsta acción no se puede deshacer.`
+      `Â¿EstÃ¡s seguro de eliminar la actividad "${this.activity.titulo}"?\n\nEsta acciÃ³n no se puede deshacer.`
     );
 
     if (confirmed) {
@@ -166,7 +166,7 @@ export class ActivityDetailComponent implements OnInit {
   }
 
   getDuration(): string {
-    if (!this.activity?.fecha_fin) return 'Sin duración definida';
+    if (!this.activity?.fecha_fin) return 'Sin duraciÃ³n definida';
     
     const start = new Date(this.activity.fecha_inicio);
     const end = new Date(this.activity.fecha_fin);

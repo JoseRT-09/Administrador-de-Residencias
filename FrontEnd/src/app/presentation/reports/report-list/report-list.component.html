@@ -15,10 +15,6 @@
           <mat-icon>add</mat-icon>
           Nuevo Reporte
         </button>
-        <button mat-stroked-button (click)="exportToCSV()">
-          <mat-icon>download</mat-icon>
-          Exportar
-        </button>
       </div>
     </div>
   </div>
@@ -103,7 +99,7 @@
       </div>
     </div>
     <div class="stat-item open">
-      <mat-icon [matBadge]="getOpenCount()" matBadgeColor="warn">error_outline</mat-icon>
+      <mat-icon [matBadge]="getOpenCount()" matBadgeColor="warn" aria-hidden="false">error_outline</mat-icon>
       <div class="stat-content">
         <span class="stat-value">{{ getOpenCount() }}</span>
         <span class="stat-label">Abiertos</span>
@@ -117,7 +113,7 @@
       </div>
     </div>
     <div class="stat-item critical">
-      <mat-icon [matBadge]="getCriticalCount()" matBadgeColor="warn">priority_high</mat-icon>
+      <mat-icon [matBadge]="getCriticalCount()" matBadgeColor="warn" aria-hidden="false">priority_high</mat-icon>
       <div class="stat-content">
         <span class="stat-value">{{ getCriticalCount() }}</span>
         <span class="stat-label">Críticos</span>
@@ -281,14 +277,6 @@
               </button>
 
               <mat-menu #menu="matMenu">
-                <button mat-menu-item>
-                  <mat-icon>print</mat-icon>
-                  <span>Imprimir</span>
-                </button>
-                <button mat-menu-item>
-                  <mat-icon>email</mat-icon>
-                  <span>Enviar Actualización</span>
-                </button>
                 <mat-divider></mat-divider>
                 <button 
                   mat-menu-item 

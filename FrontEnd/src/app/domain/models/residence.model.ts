@@ -6,6 +6,11 @@ export enum ResidenceStatus {
   MANTENIMIENTO = 'Mantenimiento'
 }
 
+export enum PropertyType {
+  RENTA = 'Renta',
+  COMPRA = 'Compra'
+}
+
 export interface Residence {
   id: number;
   numero_unidad: string;
@@ -22,9 +27,11 @@ export interface Residence {
   habitaciones?: number;
   banos?: number;
   estacionamientos?: number;
+  tipo_propiedad?: PropertyType;
+  precio?: number;
   descripcion?: string;
   notas_adicionales?: string;
-  
+
   // Relaciones
   dueno?: User;
   residenteActual?: User;
@@ -36,6 +43,13 @@ export interface CreateResidenceDto {
   bloque?: string;
   piso?: number;
   area_m2?: number;
+  habitaciones?: number;
+  banos?: number;
+  estacionamientos?: number;
+  tipo_propiedad?: PropertyType;
+  precio?: number;
+  descripcion?: string;
+  notas_adicionales?: string;
   dueno_id?: number;
   residente_actual_id?: number;
   administrador_id?: number;
@@ -46,6 +60,13 @@ export interface UpdateResidenceDto {
   bloque?: string;
   piso?: number;
   area_m2?: number;
+  habitaciones?: number;
+  banos?: number;
+  estacionamientos?: number;
+  tipo_propiedad?: PropertyType;
+  precio?: number;
+  descripcion?: string;
+  notas_adicionales?: string;
   estado?: ResidenceStatus;
   administrador_id?: number;
 }
@@ -54,7 +75,10 @@ export enum ReassignmentType {
   VENTA = 'Venta',
   RENTA = 'Renta',
   CAMBIO_RESPONSABLE = 'Cambio Responsable',
-  HERENCIA = 'Herencia'
+  HERENCIA = 'Herencia',
+  ASIGNACION = 'Asignación',
+  CAMBIO = 'Cambio',
+  LIBERACION = 'Liberación'
 }
 
 export interface AssignResidentDto {
@@ -72,15 +96,9 @@ export interface ReassignmentHistory {
   motivo?: string;
   fecha_cambio: Date;
   autorizado_por?: number;
-  
+
   // Relaciones
   residenteAnterior?: User;
   residenteNuevo?: User;
   autorizadoPor?: User;
-}
-
-export enum ReassignmentType {
-  ASIGNACION = 'Asignación',
-  CAMBIO = 'Cambio',
-  LIBERACION = 'Liberación'
 }

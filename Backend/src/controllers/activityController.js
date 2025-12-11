@@ -2,20 +2,42 @@ const { Activity, User } = require('../models');
 const { Op } = require('sequelize');
 
 // Obtener todas las actividades
-exports.getAllActivities = async (req, res) => {
+  exports.getAllActivities = async (req, res) => {
   try {
-    const { estado, page = 1, limit = 10 } = req.query;
+    console.log("\nðŸŸ¦ [Controller] getAllActivities() ejecutado");
+    console.log("ðŸŸ¦ Query recibido:", req.query);
+
+    const { estado, page = 1, limit = 10, fecha_inicio, fecha_fin } = req.query;
+
     const offset = (page - 1) * limit;
-
     const where = {};
-    if (estado) where.estado = estado;
 
-    const { count, rows } = await Activity.findAndCountAll({
+    // Filtro por estado
+    if (estado) {
+      where.estado = estado;
+      console.log("ðŸŸ§ Filtro estado aplicado:", estado);
+    }
+
+    // Filtro por rango de fechas
+    if (fecha_inicio && fecha_fin) {
+      where.fecha_inicio = {
+        [Op.between]: [fecha_inicio, fecha_fin]
+      };
+
+      console.log("ðŸŸ§ Filtro fecha aplicado:", {
+        fecha_inicio,
+        fecha_fin
+      });
+    }
+
+    console.log("ðŸŸ¦ WHERE final:", where);
+
+    const result = await Activity.findAndCountAll({
       where,
       include: [
         {
           model: User,
-          as: 'organizador', // Alias Correcto
+          as: 'organizador',
           attributes: ['id', 'nombre', 'apellido', 'email']
         }
       ],
@@ -24,15 +46,27 @@ exports.getAllActivities = async (req, res) => {
       order: [['fecha_inicio', 'ASC']]
     });
 
+    console.log("ðŸŸ¦ Sequelize result:", result);
+    console.log("ðŸŸ© count:", result.count);
+    console.log("ðŸŸ© rows:", result.rows);
+
+    if (!Array.isArray(result.rows)) {
+      console.error("âŒ ERROR: result.rows NO ES UN ARRAY");
+    }
+
     res.json({
-      total: count,
-      pages: Math.ceil(count / limit),
+      total: result.count,
+      pages: Math.ceil(result.count / limit),
       currentPage: parseInt(page),
-      activities: rows
+      data: result.rows
     });
+
   } catch (error) {
-    console.error('Error al obtener actividades:', error);
-    res.status(500).json({ message: 'Error al obtener actividades', error: error.message });
+    console.error('âŒ Error en getAllActivities:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener actividades', 
+      error: error.message 
+    });
   }
 };
 
@@ -44,7 +78,7 @@ exports.getActivityById = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'organizador', // Alias Correcto
+          as: 'organizador',
           attributes: ['id', 'nombre', 'apellido', 'email', 'telefono']
         }
       ]
@@ -65,13 +99,13 @@ exports.getActivityById = async (req, res) => {
 exports.createActivity = async (req, res) => {
   try {
     const {
-      titulo, // Campo corregido
+      titulo,
       descripcion,
       tipo,
-      fecha_inicio, // Campo corregido
+      fecha_inicio,
       fecha_fin,
       ubicacion,
-      max_participantes // Campo corregido
+      max_participantes
     } = req.body;
 
     const activity = await Activity.create({
@@ -180,7 +214,7 @@ exports.cancelActivity = async (req, res) => {
   }
 };
 
-// Obtener actividades próximas
+// Obtener prÃ³ximas actividades
 exports.getUpcomingActivities = async (req, res) => {
   try {
     const now = new Date();
@@ -203,12 +237,12 @@ exports.getUpcomingActivities = async (req, res) => {
 
     res.json({ activities, count: activities.length });
   } catch (error) {
-    console.error('Error al obtener actividades próximas:', error);
-    res.status(500).json({ message: 'Error al obtener actividades próximas', error: error.message });
+    console.error('Error al obtener actividades proximas:', error);
+    res.status(500).json({ message: 'Error al obtener actividades proximas', error: error.message });
   }
 };
 
-// Incrementar contador de inscritos
+// Incrementar contador inscritos
 exports.registerAttendance = async (req, res) => {
   try {
     const { id } = req.params;
@@ -219,7 +253,7 @@ exports.registerAttendance = async (req, res) => {
     }
 
     if (activity.max_participantes && activity.inscritos_count >= activity.max_participantes) {
-      return res.status(400).json({ message: 'La actividad ha alcanzado el cupo máximo' });
+      return res.status(400).json({ message: 'La actividad ha alcanzado el cupo mÃ¡ximo' });
     }
 
     await activity.update({
@@ -227,7 +261,7 @@ exports.registerAttendance = async (req, res) => {
     });
 
     res.json({
-      message: 'Inscripción registrada exitosamente',
+      message: 'InscripciÃ³n registrada exitosamente',
       activity
     });
   } catch (error) {

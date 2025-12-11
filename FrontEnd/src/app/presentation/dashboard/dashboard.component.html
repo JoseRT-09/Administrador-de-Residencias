@@ -71,22 +71,6 @@
     <div class="content-column">
       <!-- Pending Reports -->
       <app-pending-reports></app-pending-reports>
-
-      <!-- Chart Card - Payment Trends -->
-      <mat-card class="chart-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>trending_up</mat-icon>
-            Tendencia de Pagos
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="chart-placeholder">
-            <mat-icon>insert_chart</mat-icon>
-            <p>Gráfico de tendencias de pagos mensuales</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
     </div>
 
     <!-- Right Column -->
@@ -129,60 +113,10 @@
               <div class="activity-icon" style="background: rgba(255, 152, 0, 0.1);">
                 <mat-icon style="color: #ff9800;">meeting_room</mat-icon>
               </div>
-              <div class="activity-details">
-                <h4>Reunión de Residentes</h4>
-                <p>Domingo, 6:00 PM</p>
-              </div>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
     </div>
   </div>
-
-  <!-- Bottom Section - Status Overview -->
-  <mat-card class="status-overview-card" *ngIf="!isLoading && isAdmin()">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>assessment</mat-icon>
-        Estado General del Sistema
-      </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="status-grid">
-        <div class="status-item">
-          <div class="status-header">
-            <mat-icon class="status-icon success">check_circle</mat-icon>
-            <span class="status-label">Sistema Operativo</span>
-          </div>
-          <p class="status-value">100%</p>
-        </div>
-        
-        <div class="status-item">
-          <div class="status-header">
-            <mat-icon class="status-icon primary">storage</mat-icon>
-            <span class="status-label">Uso de Base de Datos</span>
-          </div>
-          <mat-progress-bar mode="determinate" [value]="65" color="primary"></mat-progress-bar>
-          <p class="status-value">65%</p>
-        </div>
-        
-        <div class="status-item">
-          <div class="status-header">
-            <mat-icon class="status-icon accent">people</mat-icon>
-            <span class="status-label">Usuarios Activos</span>
-          </div>
-          <p class="status-value">{{ statsCards[1].value }} / {{ statsCards[0].value * 4 }}</p>
-        </div>
-        
-        <div class="status-item">
-          <div class="status-header">
-            <mat-icon class="status-icon warn">notifications_active</mat-icon>
-            <span class="status-label">Notificaciones Pendientes</span>
-          </div>
-          <p class="status-value">{{ statsCards[2].value }}</p>
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
 </div>

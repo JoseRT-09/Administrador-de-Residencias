@@ -31,21 +31,21 @@
         </button>
 
         <mat-menu #statusMenu="matMenu">
-          <button mat-menu-item (click)="changeStatus(ComplaintStatus.NUEVO)">
+          <button mat-menu-item (click)="changeStatus('Nueva')">
             <mat-icon>fiber_new</mat-icon>
-            <span>Nuevo</span>
+            <span>Nueva</span>
           </button>
-          <button mat-menu-item (click)="changeStatus(ComplaintStatus.REVISADO)">
+          <button mat-menu-item (click)="changeStatus('En Revisión')">
             <mat-icon>rate_review</mat-icon>
-            <span>Revisado</span>
+            <span>En Revisión</span>
           </button>
-          <button mat-menu-item (click)="changeStatus(ComplaintStatus.EN_PROCESO)">
+          <button mat-menu-item (click)="changeStatus('En Proceso')">
             <mat-icon>sync</mat-icon>
             <span>En Proceso</span>
           </button>
-          <button mat-menu-item (click)="changeStatus(ComplaintStatus.RESUELTO)">
+          <button mat-menu-item (click)="changeStatus('Resuelta')">
             <mat-icon>check_circle</mat-icon>
-            <span>Resuelto</span>
+            <span>Resuelta</span>
           </button>
         </mat-menu>
 
@@ -225,9 +225,9 @@
               <form [formGroup]="commentForm" (ngSubmit)="onSubmitComment()">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Escribe tu comentario</mat-label>
-                  <textarea 
-                    matInput 
-                    formControlName="comentario" 
+                  <textarea
+                    matInput
+                    formControlName="contenido"
                     rows="3"
                     placeholder="Agrega información adicional o actualizaciones sobre la queja..."
                   ></textarea>

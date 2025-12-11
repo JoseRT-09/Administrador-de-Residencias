@@ -11,12 +11,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { GetResidenceByIdUseCase } from '../../../domain/use-cases/residence/get-residence-by-id.usecase';
-import { CreateResidenceUseCase } from '../../../domain/use-cases/residence/create-residence.usecase';
-import { UpdateResidenceUseCase } from '../../../domain/use-cases/residence/update-residence.usecase';
-import { GetActiveResidentsUseCase } from '../../../domain/use-cases/user/get-active-residents.usecase';
-import { Residence, ResidenceStatus } from '../../../domain/models/residence.model';
-import { User } from '../../../domain/models/user.model';
+import { ResidenceService } from '../../../core/services/residence.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { MatChipsModule } from '@angular/material/chips';
 
@@ -45,10 +41,8 @@ export class ResidenceFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private getResidenceById = inject(GetResidenceByIdUseCase);
-  private createResidence = inject(CreateResidenceUseCase);
-  private updateResidence = inject(UpdateResidenceUseCase);
-  private getActiveResidents = inject(GetActiveResidentsUseCase);
+  private residenceService = inject(ResidenceService);
+  private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
 
   residenceForm!: FormGroup;
@@ -56,30 +50,35 @@ export class ResidenceFormComponent implements OnInit {
   residenceId?: number;
   isLoading = false;
   isSaving = false;
-  users: User[] = [];
+  users: any[] = [];
 
   estados = [
-    { 
-      value: ResidenceStatus.DISPONIBLE, 
-      label: 'Disponible', 
+    {
+      value: 'Disponible',
+      label: 'Disponible',
       icon: 'home_work',
       description: 'Lista para ser ocupada',
       color: '#4caf50'
     },
-    { 
-      value: ResidenceStatus.OCUPADA, 
-      label: 'Ocupada', 
+    {
+      value: 'Ocupada',
+      label: 'Ocupada',
       icon: 'home',
       description: 'Actualmente habitada',
       color: '#ff9800'
     },
-    { 
-      value: ResidenceStatus.MANTENIMIENTO, 
-      label: 'Mantenimiento', 
+    {
+      value: 'Mantenimiento',
+      label: 'Mantenimiento',
       icon: 'home_repair_service',
       description: 'En reparación o mejoras',
       color: '#f44336'
     }
+  ];
+
+  tiposPropiedad = [
+    { value: 'Renta', label: 'Renta', icon: 'key', description: 'Residencia para alquiler' },
+    { value: 'Compra', label: 'Compra', icon: 'sell', description: 'Residencia en venta' }
   ];
 
   ngOnInit(): void {
@@ -97,24 +96,20 @@ export class ResidenceFormComponent implements OnInit {
       habitaciones: ['', [Validators.pattern(/^[0-9]+$/)]],
       banos: ['', [Validators.pattern(/^[0-9]+(\.[0-9]{1})?$/)]],
       estacionamientos: ['', [Validators.pattern(/^[0-9]+$/)]],
+      tipo_propiedad: [''],
+      precio: ['', [Validators.pattern(/^[0-9]+(\.[0-9]{1,2})?$/)]],
       dueno_id: [null],
       residente_actual_id: [null],
       administrador_id: [null],
-      estado: [ResidenceStatus.DISPONIBLE, [Validators.required]],
+      estado: ['Disponible', [Validators.required]],
       descripcion: [''],
       notas_adicionales: ['']
     });
   }
 
   loadUsers(): void {
-    this.getActiveResidents.execute().subscribe({
-      next: (users) => {
-        this.users = users;
-      },
-      error: (error) => {
-        console.error('Error loading users:', error);
-      }
-    });
+    // Por ahora dejamos el array vacío, se puede conectar con un servicio de usuarios
+    this.users = [];
   }
 
   checkEditMode(): void {
@@ -131,8 +126,11 @@ export class ResidenceFormComponent implements OnInit {
     if (!this.residenceId) return;
 
     this.isLoading = true;
-    this.getResidenceById.execute(this.residenceId).subscribe({
-      next: (residence) => {
+    // El servicio devuelve Observable<{ residence: Residence }>, por eso se corrige el acceso.
+    this.residenceService.getResidenceById(this.residenceId).subscribe({
+      next: (response) => {
+        // ✅ CORRECCIÓN: Desempaquetar el objeto Residence
+        const residence = response.residence;
         this.residenceForm.patchValue({
           numero_unidad: residence.numero_unidad,
           bloque: residence.bloque,
@@ -141,6 +139,8 @@ export class ResidenceFormComponent implements OnInit {
           habitaciones: residence.habitaciones,
           banos: residence.banos,
           estacionamientos: residence.estacionamientos,
+          tipo_propiedad: residence.tipo_propiedad,
+          precio: residence.precio,
           dueno_id: residence.dueno_id,
           residente_actual_id: residence.residente_actual_id,
           administrador_id: residence.administrador_id,
@@ -171,8 +171,8 @@ export class ResidenceFormComponent implements OnInit {
       });
 
       const operation = this.isEditMode
-        ? this.updateResidence.execute(this.residenceId!, formData)
-        : this.createResidence.execute(formData);
+        ? this.residenceService.updateResidence(this.residenceId!, formData)
+        : this.residenceService.createResidence(formData);
 
       operation.subscribe({
         next: () => {
@@ -182,7 +182,7 @@ export class ResidenceFormComponent implements OnInit {
           this.router.navigate(['/residences']);
         },
         error: (error) => {
-          this.notificationService.error('Error al guardar residencia');
+          this.notificationService.error(error.error?.message || 'Error al guardar residencia');
           this.isSaving = false;
         },
         complete: () => {
@@ -231,8 +231,15 @@ export class ResidenceFormComponent implements OnInit {
     return '';
   }
 
-  getStatusColor(status: ResidenceStatus): string {
+  getStatusColor(status: string): string {
     const estado = this.estados.find(e => e.value === status);
     return estado?.color || '#667eea';
+  }
+
+  getPrecioLabel(): string {
+    const tipo = this.residenceForm.get('tipo_propiedad')?.value;
+    if (tipo === 'Renta') return 'Precio Mensual de Renta';
+    if (tipo === 'Compra') return 'Precio de Venta';
+    return 'Precio';
   }
 }

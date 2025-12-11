@@ -29,11 +29,11 @@ export const routes: Routes = [
     loadChildren: () => import('./presentation/residences/residences.routes').then(m => m.RESIDENCES_ROUTES)
   },
   // RUTAS COMENTADAS HASTA QUE ESTÉN IMPLEMENTADAS
-  {
-    path: 'service-costs',
-    canActivate: [authGuard],
-    loadChildren: () => import('./presentation/service-costs/service-costs.routes').then(m => m.SERVICE_COSTS_ROUTES)
-  },
+  // {
+  //   path: 'service-costs',
+  //   canActivate: [authGuard],
+  //   loadChildren: () => import('./presentation/service-costs/service-costs.routes').then(m => m.SERVICE_COSTS_ROUTES)
+  // },
   {
     path: 'payments',
     canActivate: [authGuard],
@@ -59,17 +59,17 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadChildren: () => import('./presentation/amenities/amenities.routes').then(m => m.AMENITIES_ROUTES)
   },
-  {
-    path: 'profile',
-    canActivate: [authGuard],
-    loadComponent: () => import('./presentation/profile/profile.component').then(m => m.ProfileComponent),
-    title: 'Mi Perfil - ResidenceHub'
-  },
-  {
-    path: 'unauthorized',
-    loadComponent: () => import('./presentation/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent),
-    title: 'Acceso Denegado - ResidenceHub'
-  },
+  // {
+  //   path: 'profile',
+  //   canActivate: [authGuard],
+  //   loadComponent: () => import('./presentation/profile/profile.component').then(m => m.ProfileComponent),
+  //   title: 'Mi Perfil - ResidenceHub'
+  // },
+  // {
+  //   path: 'unauthorized',
+  //   loadComponent: () => import('./presentation/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent),
+  //   title: 'Acceso Denegado - ResidenceHub'
+  // },
   {
     path: '**',
     redirectTo: 'dashboard' 

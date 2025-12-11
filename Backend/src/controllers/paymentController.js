@@ -1,3 +1,4 @@
+
 // Backend/src/controllers/paymentController.js (CORREGIDO FINAL)
 const { Payment, ServiceCost, User, Residence, sequelize } = require('../models'); // CORREGIDO: Se añade 'sequelize'
 const { ESTADOS_COSTO } = require('../config/constants');
@@ -23,6 +24,7 @@ exports.getAllPayments = async (req, res) => {
           include: [
             {
               model: Residence,
+              as: 'residencia',
               attributes: ['id', 'numero_unidad', 'bloque']
             }
           ]
@@ -59,6 +61,7 @@ exports.getPaymentById = async (req, res) => {
           include: [
             {
               model: Residence,
+              as: 'residencia',
               attributes: ['id', 'numero_unidad', 'bloque', 'piso']
             }
           ]
@@ -120,6 +123,7 @@ exports.createPayment = async (req, res) => {
           include: [
             {
               model: Residence,
+              as: 'residencia',
               attributes: ['id', 'numero_unidad']
             }
           ]
@@ -152,6 +156,7 @@ exports.getPaymentsByResident = async (req, res) => {
           include: [
             {
               model: Residence,
+              as: 'residencia',
               attributes: ['id', 'numero_unidad', 'bloque']
             }
           ]

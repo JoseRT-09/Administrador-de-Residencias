@@ -48,32 +48,12 @@ export class RecentActivitiesComponent implements OnInit {
 
     // Cargar reportes recientes
     this.getAllReports.execute({ page: 1, limit: 5 }).subscribe({
-      next: (result) => {
-        this.activities = result.data.map(report => this.mapReportToActivity(report));
-        
-        // Agregar actividades de ejemplo (en producción vendrían de diferentes fuentes)
-        this.activities.push(
-          {
-            id: 100,
-            type: 'payment',
-            icon: 'payment',
-            color: '#4caf50',
-            title: 'Pago Recibido',
-            description: 'Residente Juan Pérez realizó pago de mantenimiento',
-            timestamp: new Date(Date.now() - 3600000),
-            status: 'Completado'
-          },
-          {
-            id: 101,
-            type: 'activity',
-            icon: 'event',
-            color: '#ff9800',
-            title: 'Nueva Actividad',
-            description: 'Torneo de fútbol programado para el sábado',
-            timestamp: new Date(Date.now() - 7200000),
-            status: 'Programada'
-          }
-        );
+      next: (result: any) => {
+        if (result && Array.isArray(result.data)) {
+            this.activities = result.data.map((report: Report) => this.mapReportToActivity(report));
+        } else {
+            this.activities = []; 
+        }
 
         // Ordenar por fecha más reciente
         this.activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -83,6 +63,8 @@ export class RecentActivitiesComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading activities:', error);
+        // Si hay error, mostrar array vacío y detener la carga
+        this.activities = [];
         this.isLoading = false;
       }
     });
@@ -102,22 +84,24 @@ export class RecentActivitiesComponent implements OnInit {
   }
 
   private getReportIcon(type: ReportType): string {
+    // ✅ CORRECCIÓN 2: Usar los tipos del backend/db (Mantenimiento, Limpieza, etc.)
     const icons: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: 'local_fire_department',
-      [ReportType.ELECTRICO]: 'electrical_services',
-      [ReportType.AGUA]: 'water_drop',
-      [ReportType.ROBO]: 'security',
+      [ReportType.MANTENIMIENTO]: 'build',
+      [ReportType.LIMPIEZA]: 'cleaning_services',
+      [ReportType.SEGURIDAD]: 'security',
+      [ReportType.INSTALACIONES]: 'devices',
       [ReportType.OTRO]: 'report_problem'
     };
     return icons[type] || 'report_problem';
   }
 
   private getReportColor(type: ReportType): string {
+    // ✅ CORRECCIÓN 3: Usar los tipos del backend/db
     const colors: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: '#f44336',
-      [ReportType.ELECTRICO]: '#ff9800',
-      [ReportType.AGUA]: '#2196f3',
-      [ReportType.ROBO]: '#9c27b0',
+      [ReportType.MANTENIMIENTO]: '#2196f3',
+      [ReportType.LIMPIEZA]: '#4caf50',
+      [ReportType.SEGURIDAD]: '#f44336',
+      [ReportType.INSTALACIONES]: '#ff9800',
       [ReportType.OTRO]: '#666'
     };
     return colors[type] || '#666';

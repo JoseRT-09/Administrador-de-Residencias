@@ -5,27 +5,38 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
+import { ActivityService } from '../../../core/services/activity.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-import { GetAllActivitiesUseCase } from '../../../domain/use-cases/activity/get-all-activities.usecase';
-import { DeleteActivityUseCase } from '../../../domain/use-cases/activity/delete-activity.usecase';
-import { Activity, ActivityType, ActivityStatus } from '../../../domain/models/activity.model';
-import { NotificationService } from '../../../core/services/notification.service';
-import { AuthService } from '../../../core/services/auth.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TimeAgoPipe } from '../../../shared/pipes/time-ago.pipe';
-import { FilterPipe } from '../../../shared/pipes/filter.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+
+interface Activity {
+  id: number;
+  titulo: string;
+  descripcion?: string;
+  tipo?: string;
+  fecha_inicio: string;
+  fecha_fin?: string;
+  ubicacion?: string;
+  max_participantes?: number;
+  estado?: string;
+  organizador_id?: number;
+}
 
 @Component({
   selector: 'app-activity-list',
@@ -34,67 +45,66 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
+    MatChipsModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatChipsModule,
-    MatMenuModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatMenuModule,
     MatDividerModule,
-    TimeAgoPipe,
-    FilterPipe
+    MatProgressSpinnerModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    TimeAgoPipe
   ],
   templateUrl: './activity-list.component.html',
   styleUrls: ['./activity-list.component.scss']
 })
 export class ActivityListComponent implements OnInit {
-  private getAllActivities = inject(GetAllActivitiesUseCase);
-  private deleteActivity = inject(DeleteActivityUseCase);
+
+  private activityService = inject(ActivityService);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
+  private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
   private fb = inject(FormBuilder);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  // Exponer enums al template
-  ActivityType = ActivityType;
-  ActivityStatus = ActivityStatus;
-
-  displayedColumns: string[] = ['titulo', 'tipo', 'fecha_inicio', 'ubicacion', 'organizador', 'estado', 'participantes', 'acciones'];
+  activities: Activity[] = [];
   dataSource = new MatTableDataSource<Activity>();
-  
+  displayedColumns: string[] = ['titulo', 'tipo', 'fecha_inicio', 'estado', 'acciones'];
+
   filterForm!: FormGroup;
-  isLoading = true;
+  isLoading = false;
   totalActivities = 0;
   pageSize = 10;
   pageIndex = 0;
 
   tipos = [
-    { value: '', label: 'Todos los tipos' },
-    { value: ActivityType.REUNION, label: 'Reunión' },
-    { value: ActivityType.EVENTO, label: 'Evento' },
-    { value: ActivityType.MANTENIMIENTO, label: 'Mantenimiento' },
-    { value: ActivityType.ASAMBLEA, label: 'Asamblea' },
-    { value: ActivityType.CELEBRACION, label: 'Celebración' },
-    { value: ActivityType.OTRO, label: 'Otro' }
+    { value: '', label: 'Todos' },
+    { value: 'ReuniÃ³n', label: 'ReuniÃ³n' },
+    { value: 'Evento', label: 'Evento' },
+    { value: 'Mantenimiento', label: 'Mantenimiento' },
+    { value: 'Asamblea', label: 'Asamblea' },
+    { value: 'CelebraciÃ³n', label: 'CelebraciÃ³n' },
+    { value: 'Otro', label: 'Otro' }
   ];
 
   estados = [
-    { value: '', label: 'Todos los estados' },
-    { value: ActivityStatus.PROGRAMADA, label: 'Programada' },
-    { value: ActivityStatus.EN_CURSO, label: 'En Curso' },
-    { value: ActivityStatus.COMPLETADA, label: 'Completada' },
-    { value: ActivityStatus.CANCELADA, label: 'Cancelada' }
+    { value: '', label: 'Todos' },
+    { value: 'Programada', label: 'Programada' },
+    { value: 'En Curso', label: 'En Curso' },
+    { value: 'Completada', label: 'Completada' },
+    { value: 'Cancelada', label: 'Cancelada' }
   ];
 
   ngOnInit(): void {
@@ -108,17 +118,14 @@ export class ActivityListComponent implements OnInit {
       search: [''],
       tipo: [''],
       estado: [''],
-      fecha_inicio: [null],
-      fecha_fin: [null]
+      fecha_inicio: [''],
+      fecha_fin: ['']
     });
   }
 
   setupFilterListeners(): void {
     this.filterForm.valueChanges
-      .pipe(
-        debounceTime(400),
-        distinctUntilChanged()
-      )
+      .pipe(debounceTime(400), distinctUntilChanged())
       .subscribe(() => {
         this.pageIndex = 0;
         this.loadActivities();
@@ -128,7 +135,7 @@ export class ActivityListComponent implements OnInit {
   loadActivities(): void {
     this.isLoading = true;
 
-    const filters = this.filterForm.value;
+    const filters = this.filterForm?.value || {};
     const params: any = {
       page: this.pageIndex + 1,
       limit: this.pageSize
@@ -137,19 +144,56 @@ export class ActivityListComponent implements OnInit {
     if (filters.tipo) params.tipo = filters.tipo;
     if (filters.estado) params.estado = filters.estado;
     if (filters.search) params.search = filters.search;
-    if (filters.fecha_inicio) params.fecha_inicio = filters.fecha_inicio.toISOString();
-    if (filters.fecha_fin) params.fecha_fin = filters.fecha_fin.toISOString();
 
-    this.getAllActivities.execute(params).subscribe({
+    // LOGS PARA VER EL FORMATO DE FECHAS
+    if (filters.fecha_inicio) {
+      console.log("ðŸ“Œ LIST: fecha_inicio cruda â†’", filters.fecha_inicio);
+      params.fecha_inicio = filters.fecha_inicio;
+    }
+
+    if (filters.fecha_fin) {
+      console.log("ðŸ“Œ LIST: fecha_fin cruda â†’", filters.fecha_fin);
+      params.fecha_fin = filters.fecha_fin;
+    }
+
+    console.log("ðŸ“¤ LISTA enviando parÃ¡metros al backend:", params);
+
+    this.activityService.getAllActivities(params).subscribe({
       next: (response) => {
-        this.dataSource.data = response.data;
-        this.totalActivities = response.total;
+        console.log("ðŸ“¥ LISTA respuesta backend:", response);
+
+        this.activities = response.data || [];
+        this.dataSource.data = this.activities;
+
+        console.log(`ðŸ“Œ LISTA total actividades recibidas: ${this.activities.length}`);
+
+        this.totalActivities = response.total || this.activities.length;
+
         this.isLoading = false;
       },
       error: (error) => {
-        this.notificationService.error('Error al cargar actividades');
+        console.error('âŒ Error loading activities (LISTA):', error);
+
+        this.activities = [];
+        this.dataSource.data = [];
         this.isLoading = false;
+
+        if (error.status === 403) {
+          this.notificationService.warning('No tienes permisos para ver actividades');
+        } else if (error.status !== 500) {
+          this.notificationService.error('Error al cargar actividades');
+        }
       }
+    });
+  }
+
+  clearFilters(): void {
+    this.filterForm.reset({
+      search: '',
+      tipo: '',
+      estado: '',
+      fecha_inicio: '',
+      fecha_fin: ''
     });
   }
 
@@ -159,83 +203,47 @@ export class ActivityListComponent implements OnInit {
     this.loadActivities();
   }
 
-  clearFilters(): void {
-    this.filterForm.reset({
-      search: '',
-      tipo: '',
-      estado: '',
-      fecha_inicio: null,
-      fecha_fin: null
-    });
-  }
-
-  onDelete(activity: Activity): void {
-    if (confirm(`¿Estás seguro de eliminar la actividad "${activity.titulo}"?`)) {
-      this.deleteActivity.execute(activity.id).subscribe({
-        next: () => {
-          this.notificationService.success('Actividad eliminada correctamente');
-          this.loadActivities();
-        },
-        error: () => {
-          this.notificationService.error('Error al eliminar actividad');
-        }
-      });
-    }
-  }
-
-  getTypeClass(type: ActivityType): string {
-    const typeMap: Record<ActivityType, string> = {
-      [ActivityType.REUNION]: 'type-meeting',
-      [ActivityType.EVENTO]: 'type-event',
-      [ActivityType.MANTENIMIENTO]: 'type-maintenance',
-      [ActivityType.ASAMBLEA]: 'type-assembly',
-      [ActivityType.CELEBRACION]: 'type-celebration',
-      [ActivityType.OTRO]: 'type-other'
+  getTypeClass(type: string): string {
+    const typeMap: Record<string, string> = {
+      'ReuniÃ³n': 'type-meeting',
+      'Evento': 'type-event',
+      'Mantenimiento': 'type-maintenance',
+      'Asamblea': 'type-assembly',
+      'CelebraciÃ³n': 'type-celebration',
+      'Otro': 'type-other'
     };
-    return typeMap[type];
+    return typeMap[type] || 'type-default';
   }
 
-  getTypeIcon(type: ActivityType): string {
-    const iconMap: Record<ActivityType, string> = {
-      [ActivityType.REUNION]: 'group',
-      [ActivityType.EVENTO]: 'event',
-      [ActivityType.MANTENIMIENTO]: 'build',
-      [ActivityType.ASAMBLEA]: 'how_to_vote',
-      [ActivityType.CELEBRACION]: 'celebration',
-      [ActivityType.OTRO]: 'event_note'
+  getTypeIcon(type: string): string {
+    const iconMap: Record<string, string> = {
+      'ReuniÃ³n': 'groups',
+      'Evento': 'event',
+      'Mantenimiento': 'build',
+      'Asamblea': 'gavel',
+      'CelebraciÃ³n': 'celebration',
+      'Otro': 'category'
     };
-    return iconMap[type];
+    return iconMap[type] || 'help_outline';
   }
 
-  getStatusClass(status: ActivityStatus): string {
-    const statusMap: Record<ActivityStatus, string> = {
-      [ActivityStatus.PROGRAMADA]: 'status-scheduled',
-      [ActivityStatus.EN_CURSO]: 'status-ongoing',
-      [ActivityStatus.COMPLETADA]: 'status-completed',
-      [ActivityStatus.CANCELADA]: 'status-cancelled'
+  getStatusClass(status: string): string {
+    const statusMap: Record<string, string> = {
+      'Programada': 'status-scheduled',
+      'En Curso': 'status-in-progress',
+      'Completada': 'status-completed',
+      'Cancelada': 'status-cancelled'
     };
-    return statusMap[status];
+    return statusMap[status] || 'status-default';
   }
 
-  getStatusIcon(status: ActivityStatus): string {
-    const iconMap: Record<ActivityStatus, string> = {
-      [ActivityStatus.PROGRAMADA]: 'schedule',
-      [ActivityStatus.EN_CURSO]: 'play_circle',
-      [ActivityStatus.COMPLETADA]: 'check_circle',
-      [ActivityStatus.CANCELADA]: 'cancel'
+  getStatusIcon(status: string): string {
+    const iconMap: Record<string, string> = {
+      'Programada': 'schedule',
+      'En Curso': 'sync',
+      'Completada': 'check_circle',
+      'Cancelada': 'cancel'
     };
-    return iconMap[status];
-  }
-
-  canEdit(): boolean {
-    return this.authService.isAdmin();
-  }
-
-  canDelete(): boolean {
-    return this.authService.isAdmin();
-  }
-
-  exportToCSV(): void {
-    this.notificationService.info('Exportando a CSV...');
+    return iconMap[status] || 'help_outline';
   }
 }

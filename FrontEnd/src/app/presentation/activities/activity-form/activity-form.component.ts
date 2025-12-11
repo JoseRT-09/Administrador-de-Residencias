@@ -12,10 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { GetActivityByIdUseCase } from '../../../domain/use-cases/activity/get-activity-by-id.usecase';
-import { CreateActivityUseCase } from '../../../domain/use-cases/activity/create-activity.usecase';
-import { UpdateActivityUseCase } from '../../../domain/use-cases/activity/update-activity.usecase';
-import { Activity, ActivityType, ActivityStatus } from '../../../domain/models/activity.model';
+import { ActivityService } from '../../../core/services/activity.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -44,15 +41,9 @@ export class ActivityFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private getActivityById = inject(GetActivityByIdUseCase);
-  private createActivity = inject(CreateActivityUseCase);
-  private updateActivity = inject(UpdateActivityUseCase);
+  private activityService = inject(ActivityService);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
-
-  // Exponer enums al template
-  ActivityType = ActivityType;
-  ActivityStatus = ActivityStatus;
 
   activityForm!: FormGroup;
   isEditMode = false;
@@ -61,19 +52,19 @@ export class ActivityFormComponent implements OnInit {
   isSaving = false;
 
   tipos = [
-    { value: ActivityType.REUNION, label: 'Reunión', icon: 'group', description: 'Reunión de residentes o junta' },
-    { value: ActivityType.EVENTO, label: 'Evento', icon: 'event', description: 'Evento social o comunitario' },
-    { value: ActivityType.MANTENIMIENTO, label: 'Mantenimiento', icon: 'build', description: 'Trabajo de mantenimiento programado' },
-    { value: ActivityType.ASAMBLEA, label: 'Asamblea', icon: 'how_to_vote', description: 'Asamblea general de propietarios' },
-    { value: ActivityType.CELEBRACION, label: 'Celebración', icon: 'celebration', description: 'Fiesta o celebración' },
-    { value: ActivityType.OTRO, label: 'Otro', icon: 'event_note', description: 'Otra actividad' }
+    { value: 'ReuniÃ³n', label: 'ReuniÃ³n', icon: 'group', description: 'ReuniÃ³n de residentes o junta' },
+    { value: 'Evento', label: 'Evento', icon: 'event', description: 'Evento social o comunitario' },
+    { value: 'Mantenimiento', label: 'Mantenimiento', icon: 'build', description: 'Trabajo de mantenimiento programado' },
+    { value: 'Asamblea', label: 'Asamblea', icon: 'how_to_vote', description: 'Asamblea general de propietarios' },
+    { value: 'CelebraciÃ³n', label: 'CelebraciÃ³n', icon: 'celebration', description: 'Fiesta o celebraciÃ³n' },
+    { value: 'Otro', label: 'Otro', icon: 'event_note', description: 'Otra actividad' }
   ];
 
   estados = [
-    { value: ActivityStatus.PROGRAMADA, label: 'Programada', icon: 'schedule', color: '#ff9800' },
-    { value: ActivityStatus.EN_CURSO, label: 'En Curso', icon: 'play_circle', color: '#2196f3' },
-    { value: ActivityStatus.COMPLETADA, label: 'Completada', icon: 'check_circle', color: '#4caf50' },
-    { value: ActivityStatus.CANCELADA, label: 'Cancelada', icon: 'cancel', color: '#f44336' }
+    { value: 'Programada', label: 'Programada', icon: 'schedule', color: '#ff9800' },
+    { value: 'En Curso', label: 'En Curso', icon: 'play_circle', color: '#2196f3' },
+    { value: 'Completada', label: 'Completada', icon: 'check_circle', color: '#4caf50' },
+    { value: 'Cancelada', label: 'Cancelada', icon: 'cancel', color: '#f44336' }
   ];
 
   ngOnInit(): void {
@@ -83,17 +74,17 @@ export class ActivityFormComponent implements OnInit {
 
   initForm(): void {
     const currentUser = this.authService.getCurrentUser();
-    
+
     this.activityForm = this.fb.group({
       titulo: ['', [Validators.required, Validators.minLength(5)]],
       descripcion: ['', [Validators.required, Validators.minLength(10)]],
-      tipo: [ActivityType.EVENTO, [Validators.required]],
+      tipo: ['Evento', [Validators.required]],
       fecha_inicio: [new Date(), [Validators.required]],
       fecha_fin: [''],
       ubicacion: ['', [Validators.required]],
       organizador_id: [currentUser?.id, [Validators.required]],
       max_participantes: [null],
-      estado: [ActivityStatus.PROGRAMADA, [Validators.required]],
+      estado: ['Programada', [Validators.required]],
       notas: ['']
     });
   }
@@ -112,8 +103,9 @@ export class ActivityFormComponent implements OnInit {
     if (!this.activityId) return;
 
     this.isLoading = true;
-    this.getActivityById.execute(this.activityId).subscribe({
-      next: (activity) => {
+    this.activityService.getActivityById(this.activityId).subscribe({
+      next: (response) => {
+        const activity = response.activity || response;
         this.activityForm.patchValue({
           titulo: activity.titulo,
           descripcion: activity.descripcion,
@@ -141,15 +133,21 @@ export class ActivityFormComponent implements OnInit {
       this.isSaving = true;
       const formData = { ...this.activityForm.value };
 
-      // Convertir fechas a ISO string
+      // Convertir fechas a YYYY-MM-DD format
       if (formData.fecha_inicio instanceof Date) {
-        formData.fecha_inicio = formData.fecha_inicio.toISOString();
+        const year = formData.fecha_inicio.getFullYear();
+        const month = String(formData.fecha_inicio.getMonth() + 1).padStart(2, '0');
+        const day = String(formData.fecha_inicio.getDate()).padStart(2, '0');
+        formData.fecha_inicio = `${year}-${month}-${day}`;
       }
       if (formData.fecha_fin instanceof Date) {
-        formData.fecha_fin = formData.fecha_fin.toISOString();
+        const year = formData.fecha_fin.getFullYear();
+        const month = String(formData.fecha_fin.getMonth() + 1).padStart(2, '0');
+        const day = String(formData.fecha_fin.getDate()).padStart(2, '0');
+        formData.fecha_fin = `${year}-${month}-${day}`;
       }
 
-      // Convertir valores vacíos a null
+      // Convertir valores vacÃ­os a null
       Object.keys(formData).forEach(key => {
         if (formData[key] === '' || formData[key] === undefined) {
           formData[key] = null;
@@ -157,8 +155,8 @@ export class ActivityFormComponent implements OnInit {
       });
 
       const operation = this.isEditMode
-        ? this.updateActivity.execute(this.activityId!, formData)
-        : this.createActivity.execute(formData);
+        ? this.activityService.updateActivity(this.activityId!, formData)
+        : this.activityService.createActivity(formData);
 
       operation.subscribe({
         next: () => {
@@ -168,7 +166,7 @@ export class ActivityFormComponent implements OnInit {
           this.router.navigate(['/activities']);
         },
         error: (error) => {
-          this.notificationService.error('Error al guardar actividad');
+          this.notificationService.error(error.error?.message || 'Error al guardar actividad');
           this.isSaving = false;
         },
         complete: () => {
@@ -183,7 +181,7 @@ export class ActivityFormComponent implements OnInit {
 
   onCancel(): void {
     if (this.activityForm.dirty) {
-      if (confirm('¿Estás seguro de cancelar? Los cambios no guardados se perderán.')) {
+      if (confirm('Â¿EstÃ¡s seguro de cancelar? Los cambios no guardados se perderÃ¡n.')) {
         this.router.navigate(['/activities']);
       }
     } else {
@@ -207,7 +205,7 @@ export class ActivityFormComponent implements OnInit {
     
     if (control?.hasError('minlength')) {
       const minLength = control.errors?.['minlength'].requiredLength;
-      return `Mínimo ${minLength} caracteres`;
+      return `MÃ­nimo ${minLength} caracteres`;
     }
     
     return '';

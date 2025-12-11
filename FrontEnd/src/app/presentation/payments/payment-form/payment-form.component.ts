@@ -12,12 +12,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { GetPaymentByIdUseCase } from '../../../domain/use-cases/payment/get-payment-by-id.usecase';
-import { CreatePaymentUseCase } from '../../../domain/use-cases/payment/create-payment.usecase';
-import { UpdatePaymentUseCase } from '../../../domain/use-cases/payment/update-payment.usecase';
+import { PaymentService } from '../../../core/services/payment.service';
 import { GetAllServiceCostsUseCase } from '../../../domain/use-cases/service-cost/get-all-service-costs.usecase';
 import { GetActiveResidentsUseCase } from '../../../domain/use-cases/user/get-active-residents.usecase';
-import { Payment, PaymentMethod, PaymentStatus } from '../../../domain/models/payment.model';
 import { ServiceCost } from '../../../domain/models/service-cost.model';
 import { User } from '../../../domain/models/user.model';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -48,9 +45,7 @@ export class PaymentFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private getPaymentById = inject(GetPaymentByIdUseCase);
-  private createPayment = inject(CreatePaymentUseCase);
-  private updatePayment = inject(UpdatePaymentUseCase);
+  private paymentService = inject(PaymentService);
   private getAllServiceCosts = inject(GetAllServiceCostsUseCase);
   private getActiveResidents = inject(GetActiveResidentsUseCase);
   private notificationService = inject(NotificationService);
@@ -66,26 +61,26 @@ export class PaymentFormComponent implements OnInit {
   selectedCost: ServiceCost | null = null;
 
   metodosPago = [
-    { 
-      value: PaymentMethod.EFECTIVO, 
+    {
+      value: 'Efectivo',
       label: 'Efectivo',
       icon: 'payments',
       description: 'Pago en efectivo'
     },
-    { 
-      value: PaymentMethod.TARJETA, 
+    {
+      value: 'Tarjeta',
       label: 'Tarjeta',
       icon: 'credit_card',
       description: 'Tarjeta de crédito o débito'
     },
-    { 
-      value: PaymentMethod.TRANSFERENCIA, 
+    {
+      value: 'Transferencia',
       label: 'Transferencia',
       icon: 'account_balance',
       description: 'Transferencia bancaria'
     },
-    { 
-      value: PaymentMethod.CHEQUE, 
+    {
+      value: 'Cheque',
       label: 'Cheque',
       icon: 'receipt',
       description: 'Pago con cheque'
@@ -93,20 +88,20 @@ export class PaymentFormComponent implements OnInit {
   ];
 
   estados = [
-    { 
-      value: PaymentStatus.COMPLETADO, 
+    {
+      value: 'Completado',
       label: 'Completado',
       icon: 'check_circle',
       color: '#4caf50'
     },
-    { 
-      value: PaymentStatus.PENDIENTE, 
+    {
+      value: 'Pendiente',
       label: 'Pendiente',
       icon: 'schedule',
       color: '#ff9800'
     },
-    { 
-      value: PaymentStatus.RECHAZADO, 
+    {
+      value: 'Rechazado',
       label: 'Rechazado',
       icon: 'cancel',
       color: '#f44336'
@@ -123,16 +118,16 @@ export class PaymentFormComponent implements OnInit {
 
   initForm(): void {
     const currentUser = this.authService.getCurrentUser();
-    
+
     this.paymentForm = this.fb.group({
       usuario_id: [currentUser?.id, [Validators.required]],
-      costo_servicio_id: [null, [Validators.required]],
+      costo_servicio_id: [null],
       monto: ['', [Validators.required, Validators.min(0.01)]],
-      metodo_pago: [PaymentMethod.EFECTIVO, [Validators.required]],
+      metodo_pago: ['Efectivo', [Validators.required]],
       fecha_pago: [new Date(), [Validators.required]],
       referencia: [''],
       notas: [''],
-      estado: [PaymentStatus.COMPLETADO, [Validators.required]]
+      estado: ['Completado', [Validators.required]]
     });
 
     this.paymentForm.get('costo_servicio_id')?.valueChanges.subscribe(costoId => {
@@ -187,10 +182,11 @@ export class PaymentFormComponent implements OnInit {
     if (!this.paymentId) return;
 
     this.isLoading = true;
-    this.getPaymentById.execute(this.paymentId).subscribe({
-      next: (payment) => {
+    this.paymentService.getPaymentById(this.paymentId).subscribe({
+      next: (response) => {
+        const payment = response.payment || response;
         this.paymentForm.patchValue({
-          usuario_id: payment.usuario_id,
+          usuario_id: payment.residente_id || payment.usuario_id,
           costo_servicio_id: payment.costo_servicio_id,
           monto: payment.monto_pagado || payment.monto,
           metodo_pago: payment.metodo_pago,
@@ -224,21 +220,25 @@ export class PaymentFormComponent implements OnInit {
       const formData = { ...this.paymentForm.value };
 
       if (formData.fecha_pago instanceof Date) {
-        formData.fecha_pago = formData.fecha_pago.toISOString();
+        const year = formData.fecha_pago.getFullYear();
+        const month = String(formData.fecha_pago.getMonth() + 1).padStart(2, '0');
+        const day = String(formData.fecha_pago.getDate()).padStart(2, '0');
+        formData.fecha_pago = `${year}-${month}-${day}`;
       }
 
-      formData.monto_pagado = formData.monto;
-      delete formData.monto;
-
-      Object.keys(formData).forEach(key => {
-        if (formData[key] === '' || formData[key] === undefined) {
-          formData[key] = null;
-        }
-      });
+      // Map to backend expected field names
+      const paymentData = {
+        residente_id: formData.usuario_id,
+        monto_pagado: formData.monto,
+        metodo_pago: formData.metodo_pago,
+        fecha_pago: formData.fecha_pago,
+        referencia: formData.referencia || null,
+        notas: formData.notas || null
+      };
 
       const operation = this.isEditMode && this.paymentId
-        ? this.updatePayment.execute(this.paymentId, formData)
-        : this.createPayment.execute(formData);
+        ? this.paymentService.updatePayment(this.paymentId, paymentData)
+        : this.paymentService.createPayment(paymentData);
 
       operation.subscribe({
         next: () => {
@@ -249,7 +249,7 @@ export class PaymentFormComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al guardar pago:', error);
-          this.notificationService.error('Error al guardar pago');
+          this.notificationService.error(error.error?.message || 'Error al guardar pago');
           this.isSaving = false;
         },
         complete: () => {

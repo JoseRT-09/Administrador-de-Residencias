@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+// Frontend/src/app/dashboard/components/pending-reports/pending-reports.component.ts (CORREGIDO)
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -8,6 +9,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GetAllReportsUseCase } from '../../../../domain/use-cases/report/get-all-reports.usecase';
 import { Report, ReportPriority, ReportType } from '../../../../domain/models/report.model';
+
+interface PaginatedResponse<T> {
+  data?: T[];
+  reports?: T[];
+  total?: number;
+  pages?: number;
+  currentPage?: number;
+}
 
 @Component({
   selector: 'app-pending-reports',
@@ -26,9 +35,10 @@ import { Report, ReportPriority, ReportType } from '../../../../domain/models/re
 })
 export class PendingReportsComponent implements OnInit {
   private getAllReports = inject(GetAllReportsUseCase);
+  private cdr = inject(ChangeDetectorRef); // AGREGADO
 
   pendingReports: Report[] = [];
-  isLoading = true;
+  isLoading = false; // CAMBIADO: Inicializar en false
 
   ngOnInit(): void {
     this.loadPendingReports();
@@ -36,21 +46,66 @@ export class PendingReportsComponent implements OnInit {
 
   loadPendingReports(): void {
     this.isLoading = true;
+    this.cdr.detectChanges(); // AGREGADO: Forzar detección de cambios
 
     this.getAllReports.execute({ 
       page: 1, 
       limit: 6,
       estado: 'Abierto,En Progreso'
     }).subscribe({
-      next: (result) => {
-        this.pendingReports = result.data;
-        this.isLoading = false;
+      next: (result: PaginatedResponse<Report> | Report[] | any) => {
+        console.log('Reports response:', result);
+        
+        if (Array.isArray(result)) {
+          this.pendingReports = result;
+        } else if (result && Array.isArray(result.data)) {
+          this.pendingReports = result.data;
+        } else if (result && Array.isArray(result.reports)) {
+          this.pendingReports = result.reports;
+        } else {
+          console.warn('Unexpected reports response format:', result);
+          this.pendingReports = [];
+        }
+
+        // AGREGADO: Establecer isLoading en false después de un breve delay
+        setTimeout(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }, 0);
       },
       error: (error) => {
         console.error('Error loading pending reports:', error);
-        this.isLoading = false;
+        this.pendingReports = [];
+        
+        setTimeout(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }, 0);
       }
     });
+  }
+
+  getSafeTimeAgoDate(dateInput: string | Date | undefined): string {
+    if (!dateInput) return '';
+
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    return this.getTimeAgo(date);
+  }
+
+  getTimeAgo(date: string | Date | undefined): string {
+    if (!date) return '';
+
+    const now = new Date();
+    const reportDate = typeof date === 'string' ? new Date(date) : new Date(date);
+    const diff = now.getTime() - reportDate.getTime();
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (hours < 24) {
+      return `Hace ${hours}h`;
+    } else {
+      return `Hace ${days}d`;
+    }
   }
 
   getPriorityClass(priority: ReportPriority): string {
@@ -75,39 +130,23 @@ export class PendingReportsComponent implements OnInit {
 
   getReportIcon(type: ReportType): string {
     const icons: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: 'local_fire_department',
-      [ReportType.ELECTRICO]: 'electrical_services',
-      [ReportType.AGUA]: 'water_drop',
-      [ReportType.ROBO]: 'security',
-      [ReportType.OTRO]: 'report_problem'
+      [ReportType.MANTENIMIENTO]: 'build', 
+      [ReportType.LIMPIEZA]: 'cleaning_services',
+      [ReportType.SEGURIDAD]: 'security',
+      [ReportType.INSTALACIONES]: 'devices',
+      [ReportType.OTRO]: 'help_outline',
     };
-    return icons[type];
+    return icons[type] || 'report_problem';
   }
 
   getReportColor(type: ReportType): string {
     const colors: Record<ReportType, string> = {
-      [ReportType.INCENDIO]: '#f44336',
-      [ReportType.ELECTRICO]: '#ff9800',
-      [ReportType.AGUA]: '#2196f3',
-      [ReportType.ROBO]: '#9c27b0',
-      [ReportType.OTRO]: '#666'
+      [ReportType.MANTENIMIENTO]: '#2196f3', // Azul
+      [ReportType.LIMPIEZA]: '#4caf50',     // Verde
+      [ReportType.SEGURIDAD]: '#f44336',    // Rojo
+      [ReportType.INSTALACIONES]: '#ff9800',// Naranja
+      [ReportType.OTRO]: '#9e9e9e',
     };
-    return colors[type];
-  }
-
-  getTimeAgo(date?: Date): string {
-    if (!date) return '';
-    
-    const now = new Date();
-    const reportDate = new Date(date);
-    const diff = now.getTime() - reportDate.getTime();
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (hours < 24) {
-      return `Hace ${hours}h`;
-    } else {
-      return `Hace ${days}d`;
-    }
+    return colors[type] || '#666';
   }
 }

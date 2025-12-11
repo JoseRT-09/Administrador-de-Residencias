@@ -105,21 +105,6 @@
             </mat-chip>
           </div>
         </div>
-
-        <div class="quick-actions">
-          <button mat-icon-button color="primary" (click)="sendEmail()" matTooltip="Enviar Email">
-            <mat-icon>email</mat-icon>
-          </button>
-          <button 
-            mat-icon-button 
-            color="accent" 
-            (click)="callPhone()" 
-            [disabled]="!user.telefono"
-            matTooltip="Llamar"
-          >
-            <mat-icon>phone</mat-icon>
-          </button>
-        </div>
       </div>
     </mat-card>
 
@@ -214,106 +199,6 @@
                   <span class="info-label">ID de Usuario</span>
                   <span class="info-value">#{{ user.id }}</span>
                 </div>
-              </div>
-            </div>
-          </div>
-        </mat-tab>
-
-        <!-- Actividad Reciente -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon>history</mat-icon>
-            Actividad Reciente
-          </ng-template>
-          
-          <div class="tab-content">
-            <div class="activity-timeline">
-              <div 
-                class="activity-item" 
-                *ngFor="let activity of activityLogs; let last = last"
-              >
-                <div class="activity-indicator">
-                  <div 
-                    class="activity-dot" 
-                    [style.background]="activity.color"
-                  ></div>
-                  <div class="activity-line" *ngIf="!last"></div>
-                </div>
-
-                <div class="activity-icon" [style.background]="activity.color + '20'">
-                  <mat-icon [style.color]="activity.color">{{ activity.icon }}</mat-icon>
-                </div>
-
-                <div class="activity-content">
-                  <div class="activity-header">
-                    <h4>{{ activity.title }}</h4>
-                    <span class="activity-time">{{ getTimeAgo(activity.timestamp) }}</span>
-                  </div>
-                  <p>{{ activity.description }}</p>
-                  <span class="activity-date">{{ activity.timestamp | date: 'dd/MM/yyyy HH:mm' }}</span>
-                </div>
-              </div>
-
-              <!-- Empty State -->
-              <div class="empty-activity" *ngIf="activityLogs.length === 0">
-                <mat-icon>inbox</mat-icon>
-                <p>No hay actividad registrada</p>
-              </div>
-            </div>
-          </div>
-        </mat-tab>
-
-        <!-- Permisos y Accesos -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon>lock</mat-icon>
-            Permisos y Accesos
-          </ng-template>
-          
-          <div class="tab-content">
-            <div class="permissions-section">
-              <h3>Permisos Asignados</h3>
-              <mat-list class="permissions-list">
-                <mat-list-item>
-                  <mat-icon matListItemIcon>dashboard</mat-icon>
-                  <div matListItemTitle>Acceso al Dashboard</div>
-                  <mat-icon matListItemMeta class="check-icon">check_circle</mat-icon>
-                </mat-list-item>
-                
-                <mat-list-item>
-                  <mat-icon matListItemIcon>home</mat-icon>
-                  <div matListItemTitle>Ver Residencias</div>
-                  <mat-icon matListItemMeta class="check-icon">check_circle</mat-icon>
-                </mat-list-item>
-
-                <mat-list-item *ngIf="user.rol !== 'Residente'">
-                  <mat-icon matListItemIcon>people</mat-icon>
-                  <div matListItemTitle>Gestionar Usuarios</div>
-                  <mat-icon matListItemMeta class="check-icon">check_circle</mat-icon>
-                </mat-list-item>
-
-                <mat-list-item>
-                  <mat-icon matListItemIcon>report</mat-icon>
-                  <div matListItemTitle>Crear Reportes</div>
-                  <mat-icon matListItemMeta class="check-icon">check_circle</mat-icon>
-                </mat-list-item>
-
-                <mat-list-item>
-                  <mat-icon matListItemIcon>payment</mat-icon>
-                  <div matListItemTitle>Registrar Pagos</div>
-                  <mat-icon matListItemMeta class="check-icon">check_circle</mat-icon>
-                </mat-list-item>
-
-                <mat-list-item *ngIf="user.rol === 'SuperAdmin'">
-                  <mat-icon matListItemIcon>settings</mat-icon>
-                  <div matListItemTitle>Configuración del Sistema</div>
-                  <mat-icon matListItemMeta class="check-icon">check_circle</mat-icon>
-                </mat-list-item>
-              </mat-list>
-
-              <div class="permissions-note">
-                <mat-icon>info</mat-icon>
-                <p>Los permisos están determinados por el rol asignado al usuario</p>
               </div>
             </div>
           </div>

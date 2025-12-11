@@ -1,4 +1,14 @@
 import {
+  DateAdapter,
+  MAT_DATE_FORMATS,
+  MAT_DATE_LOCALE
+} from "./chunk-VBUCDWOG.js";
+import {
+  MatLine,
+  MatLineModule,
+  setLines
+} from "./chunk-QEOFHKY4.js";
+import {
   MAT_OPTGROUP,
   MAT_OPTION_PARENT_COMPONENT,
   MatOptgroup,
@@ -7,37 +17,27 @@ import {
   MatOptionSelectionChange,
   _countGroupLabelsBeforeOption,
   _getOptionScrollPosition
-} from "./chunk-J6LCPSWY.js";
-import {
-  DateAdapter,
-  MAT_DATE_FORMATS,
-  MAT_DATE_LOCALE
-} from "./chunk-A7AIXSJV.js";
-import {
-  MatLine,
-  MatLineModule,
-  setLines
-} from "./chunk-BY77U2KN.js";
+} from "./chunk-MNEDC3IW.js";
 import {
   MatPseudoCheckbox,
   MatPseudoCheckboxModule
-} from "./chunk-W2EKBKDT.js";
+} from "./chunk-ZRDFRVOC.js";
 import {
-  MatRippleLoader
-} from "./chunk-7GGISHNB.js";
-import {
-  MatRippleModule
-} from "./chunk-W22ULICO.js";
+  _MatInternalFormField
+} from "./chunk-VEXZWNWQ.js";
 import {
   _ErrorStateTracker
 } from "./chunk-SH5DNOET.js";
 import {
   ErrorStateMatcher,
   ShowOnDirtyErrorStateMatcher
-} from "./chunk-NA5F65MI.js";
+} from "./chunk-GQNM55IE.js";
 import {
-  _MatInternalFormField
-} from "./chunk-V33MDS3Z.js";
+  MatRippleLoader
+} from "./chunk-DDKZSN6Z.js";
+import {
+  MatRippleModule
+} from "./chunk-E2OJV7V2.js";
 import {
   MAT_RIPPLE_GLOBAL_OPTIONS,
   MatRipple,
@@ -45,30 +45,30 @@ import {
   RippleRenderer,
   RippleState,
   defaultRippleAnimationConfig
-} from "./chunk-E5LDCM77.js";
+} from "./chunk-VXFOM55N.js";
 import {
   _StructuralStylesLoader
-} from "./chunk-BO5SPPNJ.js";
-import "./chunk-7WMCC54C.js";
+} from "./chunk-2GUTHFGV.js";
+import "./chunk-OTDDFZO5.js";
 import "./chunk-VON75VBJ.js";
 import "./chunk-PLJ2QXBA.js";
-import "./chunk-GUGIMSVJ.js";
-import "./chunk-NGX5KMVR.js";
-import "./chunk-E544JLAU.js";
+import "./chunk-LZEJP4KV.js";
 import "./chunk-XA6252L2.js";
 import {
   MATERIAL_ANIMATIONS,
   _animationsDisabled,
   _getAnimationsState
-} from "./chunk-YCERPTH7.js";
+} from "./chunk-5MNHBQEQ.js";
 import "./chunk-N4DOILP3.js";
-import "./chunk-BEZIKZCY.js";
-import "./chunk-LGOJHUOV.js";
-import "./chunk-DXBXJWPT.js";
-import "./chunk-HGIXQTMX.js";
-import "./chunk-4QLU5MFL.js";
-import "./chunk-JDI3SQXM.js";
+import "./chunk-NGX5KMVR.js";
+import "./chunk-UEMML7FQ.js";
+import "./chunk-XJVDVQ62.js";
+import "./chunk-GUGIMSVJ.js";
+import "./chunk-Z2ZQZFXY.js";
+import "./chunk-3LAC5I73.js";
+import "./chunk-XLQ6LPHT.js";
 import "./chunk-UC72YTJX.js";
+import "./chunk-TL2ITH7B.js";
 import {
   Injectable,
   NgModule,
@@ -78,13 +78,14 @@ import {
   ɵɵdefineInjectable,
   ɵɵdefineInjector,
   ɵɵdefineNgModule
-} from "./chunk-4ZVEXLGF.js";
-import "./chunk-J46EEYGT.js";
-import "./chunk-4YCCEXQQ.js";
+} from "./chunk-PNHJ6AQZ.js";
+import "./chunk-JRFR6BLO.js";
+import "./chunk-HWYXSU2G.js";
+import "./chunk-MARUHEWW.js";
 import {
   __spreadProps,
   __spreadValues
-} from "./chunk-U7EDC2PH.js";
+} from "./chunk-GOMI4DH3.js";
 
 // node_modules/@angular/material/fesm2022/core.mjs
 var VERSION = new Version("21.0.1");
