@@ -1,8 +1,11 @@
 {
-  "routes": [
+  "buildCommand": "cd FrontEnd && npm run build",
+  "outputDirectory": "FrontEnd/dist/frontend",
+  "installCommand": "cd FrontEnd && npm install",
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/FrontEnd/dist/frontend/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
