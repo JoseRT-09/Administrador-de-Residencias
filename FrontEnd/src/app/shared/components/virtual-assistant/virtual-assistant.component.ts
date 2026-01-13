@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 interface Message {
   text: string;
@@ -48,18 +49,18 @@ export class VirtualAssistantComponent implements OnInit {
     this.isOpen = !this.isOpen;
   }
 
-  async loadManualContent(): Promise<void> {
-    try {
-      // Cargar el contenido del manual.txt
-      const response = await fetch('../assets/manual.txt');
-      const text = await response.text();
-      this.manualContent = text;
-      console.log('Manual cargado correctamente');
-    } catch (error) {
-      console.error('Error cargando el manual:', error);
-      this.manualContent = 'Manual de usuario de ResidenceHub no disponible.';
-    }
+
+async loadManualContent(): Promise<void> {
+  try {
+    this.manualContent = await firstValueFrom(
+      this.http.get('assets/manual.txt', { responseType: 'text' })
+    );
+    console.log('Manual cargado correctamente');
+  } catch (error) {
+    console.error('Error cargando el manual:', error);
+    this.manualContent = 'Manual no disponible.';
   }
+}
 
   addMessage(text: string, isUser: boolean): void {
     this.messages.push({
@@ -97,7 +98,7 @@ export class VirtualAssistantComponent implements OnInit {
     }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
       const payload = {
         contents: [{
