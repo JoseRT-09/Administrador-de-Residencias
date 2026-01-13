@@ -5,7 +5,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd Backend && npm install && npm run migrate
+    buildCommand: cd Backend && npm install
     startCommand: cd Backend && npm start
     envVars:
       - key: NODE_ENV
