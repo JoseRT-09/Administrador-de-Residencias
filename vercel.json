@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd FrontEnd && npm run build -- --configuration production",
-  "outputDirectory": "FrontEnd/dist/frontend/browser",
-  "installCommand": "cd FrontEnd && npm install",
+  "buildCommand": "npm run build -- --configuration production",
+  "outputDirectory": "dist/frontend/browser",
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/(.*)",
