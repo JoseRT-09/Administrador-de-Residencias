@@ -13,6 +13,17 @@ export const AMENITIES_ROUTES: Routes = [
         title: 'Gestión de Amenidades - ResidenceHub'
       },
       {
+        path: 'reservations',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./amenity-reservations/amenity-reservations.component').then(m => m.AmenityReservationsComponent),
+        title: 'Gestión de Reservas - ResidenceHub'
+      },
+      {
+        path: 'my-reservations',
+        loadComponent: () => import('./my-reservations/my-reservations.component').then(m => m.MyReservationsComponent),
+        title: 'Mis Reservas - ResidenceHub'
+      },
+      {
         path: 'new',
         canActivate: [adminGuard],
         loadComponent: () => import('./amenity-form/amenity-form.component').then(m => m.AmenityFormComponent),

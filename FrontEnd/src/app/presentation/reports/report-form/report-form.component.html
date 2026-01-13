@@ -46,7 +46,6 @@
                 formControlName="titulo"
                 placeholder="Ej: Fuga de agua en área común"
               >
-              <mat-icon matPrefix>title</mat-icon>
               <mat-error *ngIf="reportForm.get('titulo')?.invalid">
                 {{ getErrorMessage('titulo') }}
               </mat-error>
@@ -61,7 +60,6 @@
                 rows="4"
                 placeholder="Describe el problema o incidencia con el mayor detalle posible..."
               ></textarea>
-              <mat-icon matPrefix>description</mat-icon>
               <mat-hint>Mínimo 10 caracteres</mat-hint>
               <mat-error *ngIf="reportForm.get('descripcion')?.invalid">
                 {{ getErrorMessage('descripcion') }}
@@ -93,7 +91,6 @@
                   </div>
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>category</mat-icon>
             </mat-form-field>
 
             <!-- Prioridad -->
@@ -110,7 +107,6 @@
                   </div>
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>flag</mat-icon>
             </mat-form-field>
           </div>
         </div>
@@ -119,13 +115,13 @@
         <div class="form-section">
           <div class="section-header">
             <mat-icon>location_on</mat-icon>
-            <h2>Ubicación y Estado</h2>
+            <h2>Ubicación</h2>
           </div>
           <mat-divider></mat-divider>
 
           <div class="form-grid">
             <!-- Residencia -->
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="full-width">
               <mat-label>Residencia (Opcional)</mat-label>
               <mat-select formControlName="residencia_id">
                 <mat-option [value]="null">Área común o general</mat-option>
@@ -134,57 +130,9 @@
                   <span *ngIf="residence.bloque"> - Bloque {{ residence.bloque }}</span>
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>home</mat-icon>
               <mat-hint>Deja vacío si es un área común</mat-hint>
             </mat-form-field>
-
-            <!-- Estado -->
-            <mat-form-field appearance="outline">
-              <mat-label>Estado del Reporte</mat-label>
-              <mat-select formControlName="estado">
-                <mat-option *ngFor="let estado of estados" [value]="estado.value">
-                  <div class="select-option">
-                    <mat-icon [style.color]="estado.color">{{ estado.icon }}</mat-icon>
-                    <span>{{ estado.label }}</span>
-                  </div>
-                </mat-option>
-              </mat-select>
-              <mat-icon matPrefix>sync</mat-icon>
-            </mat-form-field>
-
-            <!-- Fecha Reporte -->
-            <mat-form-field appearance="outline">
-              <mat-label>Fecha del Reporte</mat-label>
-              <input 
-                matInput 
-                [matDatepicker]="pickerReporte" 
-                formControlName="fecha_reporte"
-              >
-              <mat-datepicker-toggle matIconSuffix [for]="pickerReporte"></mat-datepicker-toggle>
-              <mat-datepicker #pickerReporte></mat-datepicker>
-              <mat-icon matPrefix>event</mat-icon>
-            </mat-form-field>
           </div>
-        </div>
-
-        <!-- Notas Adicionales -->
-        <div class="form-section">
-          <div class="section-header">
-            <mat-icon>notes</mat-icon>
-            <h2>Notas Adicionales</h2>
-          </div>
-          <mat-divider></mat-divider>
-
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Notas Internas (Opcional)</mat-label>
-            <textarea 
-              matInput 
-              formControlName="notas_adicionales"
-              rows="3"
-              placeholder="Comentarios internos, seguimiento, etc..."
-            ></textarea>
-            <mat-icon matPrefix>note</mat-icon>
-          </mat-form-field>
         </div>
 
         <!-- Preview Card -->
@@ -204,9 +152,6 @@
               </mat-chip>
               <mat-chip class="preview-chip">
                 Prioridad: {{ reportForm.get('prioridad')?.value }}
-              </mat-chip>
-              <mat-chip class="preview-chip">
-                Estado: {{ reportForm.get('estado')?.value }}
               </mat-chip>
             </div>
           </div>

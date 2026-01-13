@@ -41,15 +41,29 @@ export class NavbarComponent implements OnInit {
     return `${user.nombre.charAt(0)}${user.apellido.charAt(0)}`.toUpperCase();
   }
 
+  isResident(user: User): boolean {
+    return user.rol === 'Residente';
+  }
+
+  isAdmin(user: User): boolean {
+    return user.rol === 'Administrador' || user.rol === 'SuperAdmin';
+  }
+
   onLogout(): void {
     this.authService.logout();
   }
 
   navigateToProfile(): void {
-    this.router.navigate(['/profile']);
+    // Por ahora mostrar datos en el menú, en el futuro se puede crear una página de perfil completa
+    this.router.navigate(['/dashboard']);
   }
 
-  navigateToSettings(): void {
-    this.router.navigate(['/settings']);
+  navigateToPayments(user: User): void {
+    // Si es residente, redirigir a su residencia donde puede ver sus pagos
+    if (this.isResident(user)) {
+      this.router.navigate(['/residences']);
+    } else {
+      this.router.navigate(['/payments']);
+    }
   }
 }

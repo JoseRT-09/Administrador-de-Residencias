@@ -15,8 +15,10 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { PaymentService } from '../../../core/services/payment.service';
 import { GetAllServiceCostsUseCase } from '../../../domain/use-cases/service-cost/get-all-service-costs.usecase';
 import { GetActiveResidentsUseCase } from '../../../domain/use-cases/user/get-active-residents.usecase';
+import { GetAllResidencesUseCase } from '../../../domain/use-cases/residence/get-all-residences.usecase';
 import { ServiceCost } from '../../../domain/models/service-cost.model';
-import { User } from '../../../domain/models/user.model';
+import { User, UserRole } from '../../../domain/models/user.model';
+import { Residence } from '../../../domain/models/residence.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -48,6 +50,7 @@ export class PaymentFormComponent implements OnInit {
   private paymentService = inject(PaymentService);
   private getAllServiceCosts = inject(GetAllServiceCostsUseCase);
   private getActiveResidents = inject(GetActiveResidentsUseCase);
+  private getAllResidences = inject(GetAllResidencesUseCase);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
 
@@ -59,33 +62,9 @@ export class PaymentFormComponent implements OnInit {
   serviceCosts: ServiceCost[] = [];
   users: User[] = [];
   selectedCost: ServiceCost | null = null;
+  selectedUserResidence: Residence | null = null;
 
-  metodosPago = [
-    {
-      value: 'Efectivo',
-      label: 'Efectivo',
-      icon: 'payments',
-      description: 'Pago en efectivo'
-    },
-    {
-      value: 'Tarjeta',
-      label: 'Tarjeta',
-      icon: 'credit_card',
-      description: 'Tarjeta de crédito o débito'
-    },
-    {
-      value: 'Transferencia',
-      label: 'Transferencia',
-      icon: 'account_balance',
-      description: 'Transferencia bancaria'
-    },
-    {
-      value: 'Cheque',
-      label: 'Cheque',
-      icon: 'receipt',
-      description: 'Pago con cheque'
-    }
-  ];
+  metodosPago: any[] = [];
 
   estados = [
     {
@@ -109,6 +88,7 @@ export class PaymentFormComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.initPaymentMethods();
     this.initForm();
     this.loadServiceCosts();
     this.loadUsers();
@@ -116,32 +96,66 @@ export class PaymentFormComponent implements OnInit {
     this.checkQueryParams();
   }
 
+  initPaymentMethods(): void {
+    const currentUser = this.authService.getCurrentUser();
+    const isAdmin = currentUser?.rol === UserRole.ADMINISTRADOR || currentUser?.rol === UserRole.SUPER_ADMIN;
+
+    if (isAdmin) {
+      // Admin solo puede registrar pagos en efectivo
+      this.metodosPago = [
+        {
+          value: 'Efectivo',
+          label: 'Efectivo',
+          icon: 'payments',
+          description: 'Pago en efectivo'
+        }
+      ];
+    } else {
+      // Residente solo puede pagar con tarjeta
+      this.metodosPago = [
+        {
+          value: 'Tarjeta',
+          label: 'Tarjeta',
+          icon: 'credit_card',
+          description: 'Tarjeta de crédito o débito'
+        }
+      ];
+    }
+  }
+
   initForm(): void {
     const currentUser = this.authService.getCurrentUser();
+    const isAdmin = currentUser?.rol === UserRole.ADMINISTRADOR || currentUser?.rol === UserRole.SUPER_ADMIN;
+    const defaultMetodo = isAdmin ? 'Efectivo' : 'Tarjeta';
 
     this.paymentForm = this.fb.group({
-      usuario_id: [currentUser?.id, [Validators.required]],
-      costo_servicio_id: [null],
+      usuario_id: [null, [Validators.required]],
       monto: ['', [Validators.required, Validators.min(0.01)]],
-      metodo_pago: ['Efectivo', [Validators.required]],
+      metodo_pago: [defaultMetodo, [Validators.required]],
       fecha_pago: [new Date(), [Validators.required]],
       referencia: [''],
-      notas: [''],
-      estado: ['Completado', [Validators.required]]
+      notas: ['']
     });
 
-    this.paymentForm.get('costo_servicio_id')?.valueChanges.subscribe(costoId => {
-      this.onServiceCostChange(costoId);
+    // Cuando cambie el usuario, autocompletar el monto de su renta
+    this.paymentForm.get('usuario_id')?.valueChanges.subscribe(userId => {
+      if (userId) {
+        this.onUserChange(userId);
+      }
     });
   }
 
   loadServiceCosts(): void {
-    this.getAllServiceCosts.execute({ page: 1, limit: 1000, estado: 'Pendiente' }).subscribe({
+    console.log('[PAYMENT-FORM] Loading service costs...');
+    // Cargar todos los costos de servicio, no solo pendientes
+    this.getAllServiceCosts.execute({ page: 1, limit: 1000 }).subscribe({
       next: (response) => {
         this.serviceCosts = response.data;
+        console.log('[PAYMENT-FORM] Service costs loaded:', this.serviceCosts.length);
       },
       error: (error) => {
-        console.error('Error loading service costs:', error);
+        console.error('[PAYMENT-FORM] Error loading service costs:', error);
+        this.notificationService.error('Error al cargar costos de servicio');
       }
     });
   }
@@ -187,13 +201,11 @@ export class PaymentFormComponent implements OnInit {
         const payment = response.payment || response;
         this.paymentForm.patchValue({
           usuario_id: payment.residente_id || payment.usuario_id,
-          costo_servicio_id: payment.costo_servicio_id,
           monto: payment.monto_pagado || payment.monto,
           metodo_pago: payment.metodo_pago,
           fecha_pago: new Date(payment.fecha_pago),
           referencia: payment.referencia || '',
-          notas: payment.notas || '',
-          estado: payment.estado
+          notas: payment.notas || ''
         });
         this.isLoading = false;
       },
@@ -206,12 +218,31 @@ export class PaymentFormComponent implements OnInit {
     });
   }
 
-  onServiceCostChange(costoId: number): void {
-    const cost = this.serviceCosts.find(c => c.id === costoId);
-    if (cost) {
-      this.selectedCost = cost;
-      this.paymentForm.patchValue({ monto: cost.monto });
-    }
+  onUserChange(userId: number): void {
+    console.log('[PAYMENT-FORM] User changed:', userId);
+    // Buscar la residencia del usuario
+    this.getAllResidences.execute({ residente_actual_id: userId, limit: 1 }).subscribe({
+      next: (response) => {
+        if (response.data && response.data.length > 0) {
+          this.selectedUserResidence = response.data[0];
+          console.log('[PAYMENT-FORM] Residence found:', this.selectedUserResidence);
+
+          // Autocompletar el monto con el precio de la residencia
+          if (this.selectedUserResidence.precio) {
+            this.paymentForm.patchValue({ monto: this.selectedUserResidence.precio });
+            console.log('[PAYMENT-FORM] Rent amount autocompleted:', this.selectedUserResidence.precio);
+          }
+        } else {
+          console.log('[PAYMENT-FORM] No residence found for user');
+          this.selectedUserResidence = null;
+          this.notificationService.warning('Este usuario no tiene una residencia asignada');
+        }
+      },
+      error: (error) => {
+        console.error('[PAYMENT-FORM] Error loading residence:', error);
+        this.selectedUserResidence = null;
+      }
+    });
   }
 
   onSubmit(): void {
@@ -226,7 +257,7 @@ export class PaymentFormComponent implements OnInit {
         formData.fecha_pago = `${year}-${month}-${day}`;
       }
 
-      // Map to backend expected field names
+      // Map to backend expected field names (sin servicio_costo_id y estado)
       const paymentData = {
         residente_id: formData.usuario_id,
         monto_pagado: formData.monto,

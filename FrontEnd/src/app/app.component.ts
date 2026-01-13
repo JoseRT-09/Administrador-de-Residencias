@@ -6,6 +6,7 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { LoadingSpinnerComponent } from './shared/components/loading-spinner/loading-spinner.component';
 import { AuthService } from './core/services/auth.service';
+import { VirtualAssistantComponent } from '@shared/components/virtual-assistant/virtual-assistant.component';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +16,8 @@ import { AuthService } from './core/services/auth.service';
     RouterOutlet,
     NavbarComponent,
     SidebarComponent,
-    LoadingSpinnerComponent
+    LoadingSpinnerComponent,
+    VirtualAssistantComponent
   ],
   template: `
     <div class="app-container">
@@ -24,6 +26,7 @@ import { AuthService } from './core/services/auth.service';
       <ng-container *ngIf="showLayout">
         <app-navbar></app-navbar>
         <app-sidebar></app-sidebar>
+        <app-virtual-assistant></app-virtual-assistant>
       </ng-container>
 
       <main [class.with-layout]="showLayout">

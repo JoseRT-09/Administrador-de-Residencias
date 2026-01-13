@@ -5,13 +5,16 @@
   right: 0;
   z-index: 1000;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  height: 70px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  height: 64px;
   padding: 0 24px;
+  display: flex;
+  align-items: center;
 
   .navbar-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
     max-width: 1920px;
     margin: 0 auto;
@@ -21,62 +24,84 @@
   .navbar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     cursor: pointer;
     transition: opacity 0.3s ease;
+    flex-shrink: 0;
 
     &:hover {
       opacity: 0.9;
     }
 
     .brand-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
       color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .brand-title {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 700;
       color: white;
       letter-spacing: -0.5px;
+      line-height: 1;
+      white-space: nowrap;
     }
   }
 
   .spacer {
     flex: 1;
+    min-width: 20px;
   }
 
   .navbar-nav {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-right: 24px;
+    gap: 4px;
+    margin-right: 16px;
+    height: 100%;
 
     button {
       color: white;
       font-weight: 500;
+      font-size: 14px;
       border-radius: 8px;
-      padding: 0 16px;
-      height: 44px;
+      padding: 0 14px;
+      height: 40px;
       transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      line-height: 1;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.15);
       }
 
       &.active {
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: rgba(255, 255, 255, 0.25);
       }
 
       mat-icon {
-        margin-right: 8px;
+        margin-right: 6px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
 
       .dropdown-icon {
-        margin-left: 4px;
+        margin-left: 2px;
         margin-right: 0;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      span {
+        line-height: 1;
       }
     }
   }
@@ -84,15 +109,28 @@
   .navbar-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
+    flex-shrink: 0;
+    height: 100%;
 
     .action-button {
       color: white;
-      
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+      }
+
       mat-icon {
-        font-size: 24px;
-        width: 24px;
-        height: 24px;
+        font-size: 26px;
+        width: 26px;
+        height: 26px;
       }
     }
 
@@ -100,46 +138,46 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 6px 12px;
-      border-radius: 50px;
+      padding: 10px 16px;
+      border-radius: 8px;
       background-color: rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
       color: white;
+      height: auto;
+      line-height: 1;
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.2);
-      }
-
-      .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 16px;
-        color: white;
       }
 
       .user-info {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        justify-content: center;
         text-align: left;
+        gap: 4px;
+        line-height: 1.2;
 
         .user-name {
           font-size: 14px;
           font-weight: 600;
-          line-height: 1.2;
+          white-space: nowrap;
         }
 
         .user-role {
           font-size: 12px;
-          opacity: 0.8;
-          line-height: 1.2;
+          opacity: 0.9;
+          white-space: nowrap;
+          text-transform: capitalize;
+          font-weight: 500;
         }
+      }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
     }
   }

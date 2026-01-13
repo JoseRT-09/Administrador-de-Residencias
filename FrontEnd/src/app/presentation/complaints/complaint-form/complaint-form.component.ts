@@ -72,7 +72,6 @@ export class ComplaintFormComponent implements OnInit {
     { value: 'En Revisión', label: 'En Revisión', icon: 'rate_review' },
     { value: 'En Proceso', label: 'En Proceso', icon: 'sync' },
     { value: 'Resuelta', label: 'Resuelta', icon: 'check_circle' },
-    { value: 'Cerrada', label: 'Cerrada', icon: 'archive' },
     { value: 'Rechazada', label: 'Rechazada', icon: 'block' }
   ];
 
@@ -97,8 +96,7 @@ export class ComplaintFormComponent implements OnInit {
   loadResidences(): void {
     this.residenceService.getAllResidences({ page: 1, limit: 1000 }).subscribe({
       next: (response) => {
-        // Ya está corregido en el service, 'response' tiene la propiedad 'data'
-        this.residences = response.data; 
+        this.residences = response.residences;
       },
       error: (error) => {
         console.error('Error loading residences:', error);

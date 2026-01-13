@@ -1,4 +1,3 @@
-// Backend/src/models/index.js (CORREGIDO COMPLETO)
 const sequelize = require('../config/database');
 
 // ===== IMPORTAR TODOS LOS MODELOS =====
@@ -9,7 +8,9 @@ const Activity = require('./Activity');
 const Amenity = require('./Amenity');
 const AmenityReservation = require('./AmenityReservation');
 const Report = require('./Report');
+const ReportComment = require('./ReportComment');
 const Complaint = require('./Complaint');
+const ComplaintComment = require('./ComplaintComment');
 const Payment = require('./Payment');
 const ServiceCost = require('./ServiceCost');
 
@@ -25,6 +26,18 @@ if (!Amenity) {
 }
 if (!AmenityReservation) {
   throw new Error('Error: AmenityReservation no se cargó correctamente');
+}
+if (!Report) {
+  throw new Error('Error: Report no se cargó correctamente');
+}
+if (!ReportComment) {
+  throw new Error('Error: ReportComment no se cargó correctamente');
+}
+if (!Complaint) {
+  throw new Error('Error: Complaint no se cargó correctamente');
+}
+if (!ComplaintComment) {
+  throw new Error('Error: ComplaintComment no se cargó correctamente');
 }
 
 // Verificar que los modelos tienen los métodos necesarios de Sequelize
@@ -47,8 +60,8 @@ if (typeof User.hasMany !== 'function') {
 }
 
 // ===== DEFINIR ASOCIACIONES =====
-// ===== RELACIONES DE RESIDENCE =====
 
+// ===== RELACIONES DE RESIDENCE =====
 // Residence - Dueño
 Residence.belongsTo(User, {
   foreignKey: 'dueno_id',
@@ -80,7 +93,6 @@ User.hasMany(Residence, {
 });
 
 // ===== RELACIONES DE REASSIGNMENT HISTORY =====
-
 ReassignmentHistory.belongsTo(Residence, {
   foreignKey: 'residencia_id',
   as: 'residencia'
@@ -94,19 +106,16 @@ ReassignmentHistory.belongsTo(User, {
   foreignKey: 'residente_anterior_id',
   as: 'residenteAnterior'
 });
-
 ReassignmentHistory.belongsTo(User, {
   foreignKey: 'residente_nuevo_id',
   as: 'residenteNuevo'
 });
-
 ReassignmentHistory.belongsTo(User, {
   foreignKey: 'autorizado_por',
   as: 'autorizadoPor'
 });
 
 // ===== RELACIONES DE ACTIVITY =====
-
 User.hasMany(Activity, {
   foreignKey: 'organizador_id',
   as: 'actividadesOrganizadas'
@@ -117,7 +126,6 @@ Activity.belongsTo(User, {
 });
 
 // ===== RELACIONES DE AMENITY =====
-
 Amenity.hasMany(AmenityReservation, {
   foreignKey: 'amenidad_id',
   as: 'reservas'
@@ -128,16 +136,15 @@ AmenityReservation.belongsTo(Amenity, {
 });
 
 User.hasMany(AmenityReservation, {
-  foreignKey: 'usuario_id',
+  foreignKey: 'residente_id',
   as: 'reservasAmenidades'
 });
 AmenityReservation.belongsTo(User, {
-  foreignKey: 'usuario_id',
-  as: 'usuario'
+  foreignKey: 'residente_id',
+  as: 'residente'
 });
 
 // ===== RELACIONES DE REPORT =====
-
 User.hasMany(Report, {
   foreignKey: 'reportado_por_id',
   as: 'reportesCreados'
@@ -165,8 +172,26 @@ Report.belongsTo(Residence, {
   as: 'residencia'
 });
 
-// ===== RELACIONES DE COMPLAINT =====
+// ===== RELACIONES DE REPORT COMMENT =====
+Report.hasMany(ReportComment, {
+  foreignKey: 'report_id',
+  as: 'comments'
+});
+ReportComment.belongsTo(Report, {
+  foreignKey: 'report_id',
+  as: 'report'
+});
 
+User.hasMany(ReportComment, {
+  foreignKey: 'user_id',
+  as: 'reportComments'
+});
+ReportComment.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'usuario'
+});
+
+// ===== RELACIONES DE COMPLAINT =====
 User.hasMany(Complaint, {
   foreignKey: 'usuario_id',
   as: 'quejas'
@@ -185,8 +210,26 @@ Complaint.belongsTo(Residence, {
   as: 'residencia'
 });
 
-// ===== RELACIONES DE PAYMENT =====
+// ===== RELACIONES DE COMPLAINT COMMENT =====
+Complaint.hasMany(ComplaintComment, {
+  foreignKey: 'complaint_id',
+  as: 'comments'
+});
+ComplaintComment.belongsTo(Complaint, {
+  foreignKey: 'complaint_id',
+  as: 'complaint'
+});
 
+User.hasMany(ComplaintComment, {
+  foreignKey: 'user_id',
+  as: 'complaintComments'
+});
+ComplaintComment.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'usuario'
+});
+
+// ===== RELACIONES DE PAYMENT =====
 User.hasMany(Payment, {
   foreignKey: 'residente_id',
   as: 'pagos'
@@ -206,7 +249,6 @@ Payment.belongsTo(ServiceCost, {
 });
 
 // ===== RELACIONES DE SERVICE COST =====
-
 Residence.hasMany(ServiceCost, {
   foreignKey: 'residencia_id',
   as: 'costos'
@@ -226,7 +268,9 @@ module.exports = {
   Amenity,
   AmenityReservation,
   Report,
+  ReportComment,
   Complaint,
+  ComplaintComment,
   Payment,
   ServiceCost
 };

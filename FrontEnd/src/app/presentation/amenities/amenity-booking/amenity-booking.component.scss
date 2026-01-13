@@ -3,7 +3,7 @@
   background: #f5f7fa;
   min-height: calc(100vh - 70px);
   margin-top: 70px;
-  margin-left: 260px;
+  margin-left: 80px;
 
   @media (max-width: 960px) {
     margin-left: 0;
@@ -183,6 +183,11 @@
 .form-card {
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+
+  @media (max-width: 768px) {
+    padding: 24px;
+  }
 
   h3 {
     display: flex;

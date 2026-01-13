@@ -115,7 +115,7 @@ export class ResidenceListComponent implements OnInit {
 
     this.residenceService.getAllResidences(params).subscribe({
       next: (response) => {
-        this.dataSource.data = response.data;
+        this.dataSource.data = response.residences;
         this.totalResidences = response.total;
         this.isLoading = false;
       },
@@ -187,14 +187,10 @@ export class ResidenceListComponent implements OnInit {
   }
 
   canEdit(): boolean {
-    return this.authService.isAdmin();
+    return this.authService.isAdmin() || this.authService.isSuperAdmin();
   }
 
   canDelete(): boolean {
     return this.authService.isSuperAdmin();
-  }
-
-  exportToCSV(): void {
-    this.notificationService.info('Exportando a CSV...');
   }
 }

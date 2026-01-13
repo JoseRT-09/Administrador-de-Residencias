@@ -9,8 +9,14 @@ export const RESIDENCES_ROUTES: Routes = [
     children: [
       {
         path: '',
+        canActivate: [adminGuard],
         loadComponent: () => import('./residence-list/residence-list.component').then(m => m.ResidenceListComponent),
         title: 'Gestión de Residencias - ResidenceHub'
+      },
+      {
+        path: 'my-residence',
+        loadComponent: () => import('./my-residence/my-residence.component').then(m => m.MyResidenceComponent),
+        title: 'Mi Residencia - ResidenceHub'
       },
       {
         path: 'new',

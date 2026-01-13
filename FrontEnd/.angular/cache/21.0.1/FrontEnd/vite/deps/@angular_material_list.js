@@ -18,9 +18,6 @@ import {
 import {
   _StructuralStylesLoader
 } from "./chunk-2GUTHFGV.js";
-import {
-  NG_VALUE_ACCESSOR
-} from "./chunk-BGANXU6G.js";
 import "./chunk-OTDDFZO5.js";
 import "./chunk-VON75VBJ.js";
 import {
@@ -28,6 +25,9 @@ import {
 } from "./chunk-PLJ2QXBA.js";
 import "./chunk-BC65752V.js";
 import "./chunk-GUGIMSVJ.js";
+import {
+  NG_VALUE_ACCESSOR
+} from "./chunk-BGANXU6G.js";
 import "./chunk-NGX5KMVR.js";
 import {
   A,

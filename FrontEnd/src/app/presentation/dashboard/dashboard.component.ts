@@ -7,11 +7,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatGridListModule } from '@angular/material/grid-list';
-import { AuthService, User, UserRole } from '../../core/services/auth.service';
+import { AuthService, User} from '../../core/services/auth.service';
 import { GetReportStatisticsUseCase } from '../../domain/use-cases/report/get-report-statistics.usecase';
 import { GetAllResidencesUseCase } from '../../domain/use-cases/residence/get-all-residences.usecase';
 import { GetAllPaymentsUseCase } from '../../domain/use-cases/payment/get-all-payments.usecase';
 import { GetUpcomingActivitiesUseCase } from '../../domain/use-cases/activity/get-upcoming-activities.usecase';
+import { GetAllUsersUseCase } from '../../domain/use-cases/user/get-all-users.usecase';
+import { UserRole, UserStatus } from '../../domain/models/user.model';
 import { Observable, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StatsCardComponent } from './components/stats-card/stats-card.component';
@@ -51,6 +53,7 @@ export class DashboardComponent implements OnInit {
   private getAllResidences = inject(GetAllResidencesUseCase);
   private getAllPayments = inject(GetAllPaymentsUseCase);
   private getUpcomingActivities = inject(GetUpcomingActivitiesUseCase);
+  private getAllUsers = inject(GetAllUsersUseCase);
 
   currentUser$!: Observable<User | null>;
   currentUser: User | null = null;
@@ -92,9 +95,9 @@ export class DashboardComponent implements OnInit {
       changeType: 'negative'
     },
     {
-      title: 'Pagos del Mes',
+      title: 'Ganancias del Mes',
       value: 0,
-      icon: 'payments',
+      icon: 'attach_money',
       color: 'success',
       route: '/payments',
       change: '+15%',
@@ -144,32 +147,73 @@ export class DashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.isLoading = true;
 
-    forkJoin({
-      reportStats: this.getReportStatistics.execute(),
-      residences: this.getAllResidences.execute({ page: 1, limit: 1 }),
-      payments: this.getAllPayments.execute({ page: 1, limit: 100 }),
-      activities: this.getUpcomingActivities.execute()
-    }).subscribe({
-      next: (results) => {
-        // Actualizar estadísticas
-        this.dashboardStats.totalResidences = results.residences.total;
-        this.dashboardStats.pendingReports = results.reportStats.byStatus.abierto + results.reportStats.byStatus.enProgreso;
-        this.dashboardStats.totalPayments = results.payments.total;
-        this.dashboardStats.upcomingActivities = results.activities.length;
+    // Diferentes llamadas según el rol del usuario
+    const isAdmin = this.authService.isAdmin() || this.authService.isSuperAdmin();
 
-        // Actualizar cards
-        this.statsCards[0].value = this.dashboardStats.totalResidences;
-        this.statsCards[1].value = this.dashboardStats.totalResidents;
-        this.statsCards[2].value = this.dashboardStats.pendingReports;
-        this.statsCards[3].value = this.dashboardStats.totalPayments;
+    if (isAdmin) {
+      // Para administradores: cargar todas las estadísticas
+      forkJoin({
+        reportStats: this.getReportStatistics.execute(),
+        residences: this.getAllResidences.execute({ page: 1, limit: 1 }),
+        payments: this.getAllPayments.execute({ page: 1, limit: 100 }),
+        activities: this.getUpcomingActivities.execute(),
+        users: this.getAllUsers.execute({ page: 1, limit: 1000 })
+      }).subscribe({
+        next: (results) => {
+          // Actualizar estadísticas
+          this.dashboardStats.totalResidences = results.residences.total;
+          this.dashboardStats.pendingReports = results.reportStats.byStatus.abierto + results.reportStats.byStatus.enProgreso;
+          this.dashboardStats.upcomingActivities = results.activities.length;
 
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading dashboard data:', error);
-        this.isLoading = false;
-      }
-    });
+          // Calcular residentes activos (usuarios con rol Residente y estado Activo)
+          const usersData = (results.users as any).data || (results.users as any).users || [];
+          const activeResidents = usersData.filter((user: any) =>
+            user.rol === 'Residente' && user.estado === 'Activo'
+          ).length;
+          this.dashboardStats.totalResidents = activeResidents;
+
+          // Calcular ganancias totales del mes (suma de montos de pagos)
+          const paymentsData = (results.payments as any).data || (results.payments as any).payments || [];
+          const totalEarnings = paymentsData.reduce((sum: number, payment: any) => {
+            return sum + (Number(payment.monto_pagado) || 0);
+          }, 0);
+
+          // Actualizar cards
+          this.statsCards[0].value = this.dashboardStats.totalResidences;
+          this.statsCards[1].value = this.dashboardStats.totalResidents;
+          this.statsCards[2].value = this.dashboardStats.pendingReports;
+          this.statsCards[3].value = Math.round(totalEarnings); // Ganancias del mes
+
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading dashboard data:', error);
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Para residentes: solo cargar actividades y residencias
+      forkJoin({
+        residences: this.getAllResidences.execute({ page: 1, limit: 1 }),
+        activities: this.getUpcomingActivities.execute()
+      }).subscribe({
+        next: (results) => {
+          // Actualizar estadísticas limitadas
+          this.dashboardStats.totalResidences = results.residences.total;
+          this.dashboardStats.upcomingActivities = results.activities.length;
+
+          // Actualizar cards (solo las que son relevantes)
+          this.statsCards[0].value = this.dashboardStats.totalResidences;
+          this.statsCards[3].value = 0; // Pagos se manejan en my-payments
+
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading dashboard data:', error);
+          this.isLoading = false;
+        }
+      });
+    }
   }
 
   getGreeting(): string {

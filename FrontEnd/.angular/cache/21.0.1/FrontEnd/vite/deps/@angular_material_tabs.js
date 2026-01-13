@@ -4,15 +4,15 @@ import {
   TemplatePortal
 } from "./chunk-OZQ4FOUJ.js";
 import {
+  SharedResizeObserver
+} from "./chunk-PGLLNB3R.js";
+import {
   MAT_RIPPLE_GLOBAL_OPTIONS,
   MatRipple
 } from "./chunk-7T4624PP.js";
 import {
   _StructuralStylesLoader
 } from "./chunk-2GUTHFGV.js";
-import {
-  SharedResizeObserver
-} from "./chunk-PGLLNB3R.js";
 import "./chunk-OTDDFZO5.js";
 import "./chunk-VON75VBJ.js";
 import "./chunk-PLJ2QXBA.js";

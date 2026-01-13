@@ -32,7 +32,6 @@ module.exports = {
     EN_REVISION: 'En Revisión',
     EN_PROCESO: 'En Proceso',
     RESUELTA: 'Resuelta',
-    CERRADA: 'Cerrada',
     RECHAZADA: 'Rechazada'
   },
   PRIORIDADES_QUEJA: {
@@ -53,8 +52,7 @@ module.exports = {
   ESTADOS_REPORTE: {
     ABIERTO: 'Abierto',
     EN_PROGRESO: 'En Progreso',
-    RESUELTO: 'Resuelto',
-    CERRADO: 'Cerrado'
+    RESUELTO: 'Resuelto'
   },
   PRIORIDADES_REPORTE: {
     BAJA: 'Baja',

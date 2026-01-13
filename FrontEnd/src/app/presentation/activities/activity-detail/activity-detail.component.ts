@@ -216,7 +216,7 @@ export class ActivityDetailComponent implements OnInit {
       new Date(this.activity.fecha_inicio).toISOString().slice(0, 19).replace('T', ' ')
     );
 
-    if (!fechaInicio) return; // Usuario canceló
+    if (!fechaInicio) return;
 
     const fechaFinRaw = this.activity.fecha_fin ? prompt(
       'Ingresa la nueva fecha y hora de fin (formato: YYYY-MM-DD HH:MM:SS, opcional):',

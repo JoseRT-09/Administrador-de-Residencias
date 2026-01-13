@@ -160,7 +160,7 @@ export class ServiceCostListComponent implements OnInit {
   }
 
   onDelete(cost: ServiceCost): void {
-    if (confirm(`¿Estás seguro de eliminar el costo "${cost.concepto}"?`)) {
+    if (confirm(`¿Estás seguro de eliminar el costo "${cost.nombre_servicio}"?`)) {
       this.deleteServiceCost.execute(cost.id).subscribe({
         next: () => {
           this.notificationService.success('Costo eliminado correctamente');

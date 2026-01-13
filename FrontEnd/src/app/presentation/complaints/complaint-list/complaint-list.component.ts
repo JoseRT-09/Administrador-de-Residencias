@@ -181,7 +181,7 @@ export class ComplaintListComponent implements OnInit {
 
   changeStatus(
     complaint: any,
-    newStatus: 'Nueva' | 'En Revisión' | 'En Proceso' | 'Resuelta' | 'Cerrada' | 'Rechazada' | undefined
+    newStatus: 'Nueva' | 'En Revisión' | 'En Proceso' | 'Resuelta' | 'Rechazada' | undefined
   ): void {
     this.complaintService.updateComplaint(complaint.id, { estado: newStatus }).subscribe({
       next: () => {
@@ -309,10 +309,6 @@ export class ComplaintListComponent implements OnInit {
 
   canDelete(): boolean {
     return this.authService.isAdmin();
-  }
-
-  exportToCSV(): void {
-    this.notificationService.info('Exportando a CSV...');
   }
 
   getNewCount(): number {

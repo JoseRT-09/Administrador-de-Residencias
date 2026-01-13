@@ -141,12 +141,6 @@ export class ReportFormComponent implements OnInit {
       icon: 'check_circle',
       color: '#4caf50'
     },
-    {
-      value: 'Cerrado',
-      label: 'Cerrado',
-      icon: 'archive',
-      color: '#9e9e9e'
-    }
   ];
 
   ngOnInit(): void {
@@ -168,7 +162,7 @@ export class ReportFormComponent implements OnInit {
   loadResidences(): void {
     this.residenceService.getAllResidences({ page: 1, limit: 1000 }).subscribe({
       next: (response) => {
-        this.residences = response.data;
+        this.residences = response.residences;
       },
       error: (error) => {
         console.error('Error loading residences:', error);

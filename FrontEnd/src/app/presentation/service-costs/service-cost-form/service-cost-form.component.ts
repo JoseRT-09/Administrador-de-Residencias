@@ -149,7 +149,7 @@ export class ServiceCostFormComponent implements OnInit {
     this.getServiceCostById.execute(this.costId).subscribe({
       next: (cost) => {
         this.costForm.patchValue({
-          concepto: cost.concepto,
+          nombre_servicio: cost.nombre_servicio,
           descripcion: cost.descripcion,
           monto: cost.monto,
           periodo: cost.periodo,
@@ -157,7 +157,6 @@ export class ServiceCostFormComponent implements OnInit {
           fecha_vencimiento: new Date(cost.fecha_vencimiento),
           residencia_id: cost.residencia_id,
           estado: cost.estado,
-          notas: cost.notas
         });
         this.isLoading = false;
       },

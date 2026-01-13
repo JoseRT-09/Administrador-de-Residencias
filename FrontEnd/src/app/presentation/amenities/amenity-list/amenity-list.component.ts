@@ -23,7 +23,6 @@ import { UpdateAmenityUseCase } from '../../../domain/use-cases/amenity/update-a
 import { Amenity, AmenityType, AmenityStatus } from '../../../domain/models/amenity.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { FilterPipe } from '../../../shared/pipes/filter.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
@@ -47,8 +46,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatSlideToggleModule,
-    MatDividerModule,
-    FilterPipe
+    MatDividerModule
   ],
   templateUrl: './amenity-list.component.html',
   styleUrls: ['./amenity-list.component.scss']
@@ -64,7 +62,7 @@ export class AmenityListComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['nombre', 'tipo', 'capacidad', 'horario', 'costo_reserva', 'estado', 'disponible', 'acciones'];
+  displayedColumns: string[] = ['nombre', 'tipo', 'capacidad', 'horario', 'estado', 'disponible', 'acciones'];
   dataSource = new MatTableDataSource<Amenity>();
   
   filterForm!: FormGroup;
@@ -89,7 +87,6 @@ export class AmenityListComponent implements OnInit {
     { value: '', label: 'Todos los estados' },
     { value: AmenityStatus.DISPONIBLE, label: 'Disponible' },
     { value: AmenityStatus.OCUPADA, label: 'Ocupada' },
-    { value: AmenityStatus.MANTENIMIENTO, label: 'Mantenimiento' },
     { value: AmenityStatus.FUERA_SERVICIO, label: 'Fuera de Servicio' }
   ];
 
@@ -227,7 +224,6 @@ export class AmenityListComponent implements OnInit {
     const statusMap: Record<AmenityStatus, string> = {
       [AmenityStatus.DISPONIBLE]: 'status-available',
       [AmenityStatus.OCUPADA]: 'status-occupied',
-      [AmenityStatus.MANTENIMIENTO]: 'status-maintenance',
       [AmenityStatus.FUERA_SERVICIO]: 'status-out-of-service'
     };
     return statusMap[status];
@@ -237,10 +233,13 @@ export class AmenityListComponent implements OnInit {
     const iconMap: Record<AmenityStatus, string> = {
       [AmenityStatus.DISPONIBLE]: 'check_circle',
       [AmenityStatus.OCUPADA]: 'schedule',
-      [AmenityStatus.MANTENIMIENTO]: 'build',
       [AmenityStatus.FUERA_SERVICIO]: 'cancel'
     };
     return iconMap[status];
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin() || this.authService.isSuperAdmin();
   }
 
   canEdit(): boolean {
@@ -251,15 +250,15 @@ export class AmenityListComponent implements OnInit {
     return this.authService.isSuperAdmin();
   }
 
-  exportToCSV(): void {
-    this.notificationService.info('Exportando a CSV...');
-  }
-
   getAvailableCount(): number {
     return this.dataSource.data.filter(a => a.estado === AmenityStatus.DISPONIBLE).length;
   }
 
   getBookableCount(): number {
     return this.dataSource.data.filter(a => a.disponible_reserva ?? a.requiere_reserva).length;
+  }
+
+  getOutOfServiceCount(): number {
+    return this.dataSource.data.filter(a => a.estado === AmenityStatus.FUERA_SERVICIO).length;
   }
 }

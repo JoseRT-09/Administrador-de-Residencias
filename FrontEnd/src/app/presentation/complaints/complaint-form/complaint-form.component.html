@@ -37,7 +37,6 @@
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Asunto</mat-label>
               <input matInput formControlName="asunto" placeholder="Ej: Ruido excesivo en horas de descanso">
-              <mat-icon matPrefix>title</mat-icon>
               <mat-error *ngIf="complaintForm.get('asunto')?.invalid">
                 {{ getErrorMessage('asunto') }}
               </mat-error>
@@ -47,7 +46,6 @@
               <mat-label>Descripción Detallada</mat-label>
               <textarea matInput formControlName="descripcion" rows="5" 
                 placeholder="Describe en detalle la situación que motiva tu queja..."></textarea>
-              <mat-icon matPrefix>description</mat-icon>
               <mat-hint>Mínimo 20 caracteres</mat-hint>
               <mat-error *ngIf="complaintForm.get('descripcion')?.invalid">
                 {{ getErrorMessage('descripcion') }}
@@ -67,7 +65,6 @@
                   </div>
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>category</mat-icon>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -83,7 +80,6 @@
                   </div>
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>flag</mat-icon>
             </mat-form-field>
 
             <mat-form-field appearance="outline" *ngIf="canEditStatus()">
@@ -96,7 +92,6 @@
                   </div>
                 </mat-option>
               </mat-select>
-              <mat-icon matPrefix>sync</mat-icon>
             </mat-form-field>
           </div>
         </div>
@@ -117,7 +112,6 @@
                 <span *ngIf="residence.bloque"> - Bloque {{ residence.bloque }}</span>
               </mat-option>
             </mat-select>
-            <mat-icon matPrefix>location_on</mat-icon>
             <mat-hint>Selecciona una residencia si la queja está relacionada con una unidad específica</mat-hint>
           </mat-form-field>
         </div>

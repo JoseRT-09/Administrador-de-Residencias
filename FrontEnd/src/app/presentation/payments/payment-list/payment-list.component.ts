@@ -21,7 +21,6 @@ import { MatDividerModule } from '@angular/material/divider';
 import { PaymentService } from '../../../core/services/payment.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { FilterPipe } from '../../../shared/pipes/filter.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
@@ -46,8 +45,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     MatProgressSpinnerModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatDividerModule,
-    FilterPipe
+    MatDividerModule
   ],
   templateUrl: './payment-list.component.html',
   styleUrls: ['./payment-list.component.scss']
@@ -62,7 +60,7 @@ export class PaymentListComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['fecha_pago', 'usuario', 'costo_servicio', 'monto', 'metodo_pago', 'estado', 'acciones'];
+  displayedColumns: string[] = ['fecha_pago', 'usuario', 'costo_servicio', 'monto', 'metodo_pago', 'acciones'];
   dataSource = new MatTableDataSource<any>();
 
   filterForm!: FormGroup;
@@ -79,13 +77,6 @@ export class PaymentListComponent implements OnInit {
     { value: 'Cheque', label: 'Cheque' }
   ];
 
-  estados = [
-    { value: '', label: 'Todos los estados' },
-    { value: 'Completado', label: 'Completado' },
-    { value: 'Pendiente', label: 'Pendiente' },
-    { value: 'Rechazado', label: 'Rechazado' }
-  ];
-
   ngOnInit(): void {
     this.initFilterForm();
     this.loadPayments();
@@ -96,7 +87,6 @@ export class PaymentListComponent implements OnInit {
     this.filterForm = this.fb.group({
       search: [''],
       metodo_pago: [''],
-      estado: [''],
       fecha_inicio: [null],
       fecha_fin: [null]
     });
@@ -124,7 +114,6 @@ export class PaymentListComponent implements OnInit {
     };
 
     if (filters.metodo_pago) params.metodo_pago = filters.metodo_pago;
-    if (filters.estado) params.estado = filters.estado;
     if (filters.search) params.search = filters.search;
     if (filters.fecha_inicio) {
       const year = filters.fecha_inicio.getFullYear();
@@ -141,7 +130,7 @@ export class PaymentListComponent implements OnInit {
 
     this.paymentService.getAllPayments(params).subscribe({
       next: (response) => {
-        this.dataSource.data = response.data;
+        this.dataSource.data = response.payments;
         this.totalPayments = response.total;
         this.isLoading = false;
       },
@@ -163,14 +152,13 @@ export class PaymentListComponent implements OnInit {
     this.filterForm.reset({
       search: '',
       metodo_pago: '',
-      estado: '',
       fecha_inicio: null,
       fecha_fin: null
     });
   }
 
   onDelete(payment: any): void {
-    if (confirm(`¿Estás seguro de eliminar este pago?\n\nMonto: $${payment.monto || payment.monto_pagado}`)) {
+    if (confirm(`¿Estás seguro de eliminar este pago?\n\nMonto: $${payment.monto_pagado}`)) {
       this.paymentService.deletePayment(payment.id).subscribe({
         next: () => {
           this.notificationService.success('Pago eliminado correctamente');
@@ -182,24 +170,6 @@ export class PaymentListComponent implements OnInit {
         }
       });
     }
-  }
-
-  getStatusClass(status: string): string {
-    const statusMap: Record<string, string> = {
-      'Completado': 'status-completed',
-      'Pendiente': 'status-pending',
-      'Rechazado': 'status-rejected'
-    };
-    return statusMap[status] || 'status-default';
-  }
-
-  getStatusIcon(status: string): string {
-    const iconMap: Record<string, string> = {
-      'Completado': 'check_circle',
-      'Pendiente': 'schedule',
-      'Rechazado': 'cancel'
-    };
-    return iconMap[status] || 'help_outline';
   }
 
   getMethodIcon(method: string): string {
@@ -214,26 +184,21 @@ export class PaymentListComponent implements OnInit {
 
   getTotalAmount(): number {
     return this.dataSource.data.reduce((sum, payment) => {
-      const monto = payment.monto || payment.monto_pagado || 0;
-      return sum + Number(monto);
+      return sum + Number(payment.monto_pagado || 0);
     }, 0);
   }
 
   getCompletedAmount(): number {
-    return this.dataSource.data
-      .filter(payment => payment.estado === 'Completado')
-      .reduce((sum, payment) => {
-        const monto = payment.monto || payment.monto_pagado || 0;
-        return sum + Number(monto);
-      }, 0);
+    // Todos los pagos registrados están completados
+    return this.getTotalAmount();
   }
 
   getUserName(payment: any): string {
-    const user = payment.usuario || payment.residente;
+    const user = payment.residente || payment.usuario;
     if (user) {
       return `${user.nombre} ${user.apellido}`;
     }
-    return 'Usuario desconocido';
+    return 'Sin usuario';
   }
 
   canEdit(): boolean {
@@ -242,10 +207,6 @@ export class PaymentListComponent implements OnInit {
 
   canDelete(): boolean {
     return this.authService.isSuperAdmin();
-  }
-
-  exportToCSV(): void {
-    this.notificationService.info('Exportando a CSV...');
   }
 
   printReceipt(payment: any): void {

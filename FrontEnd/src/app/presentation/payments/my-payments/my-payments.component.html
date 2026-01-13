@@ -1,0 +1,283 @@
+<div class="my-payments-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button routerLink="/residences/my-residence" matTooltip="Volver a mi residencia">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="title-section">
+        <h1>
+          <mat-icon>receipt_long</mat-icon>
+          Mis Pagos
+        </h1>
+        <p class="subtitle">Gestiona tus pagos y consulta tu historial</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Residence Summary Card with Payment Action -->
+  <mat-card class="residence-payment-card" *ngIf="residence && !isLoadingResidence">
+    <mat-card-content>
+      <div class="residence-payment-layout">
+        <!-- Residence Info -->
+        <div class="residence-info-section">
+          <div class="residence-header">
+            <mat-icon class="home-icon">home</mat-icon>
+            <div>
+              <h2>{{ residence.numero_unidad }}</h2>
+              <p class="residence-details">
+                <span *ngIf="residence.bloque">Bloque {{ residence.bloque }}</span>
+                <span *ngIf="residence.area_m2"> • {{ residence.area_m2 }} m²</span>
+              </p>
+            </div>
+          </div>
+
+          <mat-divider class="vertical-divider"></mat-divider>
+
+          <!-- Property Type Badge -->
+          <div class="property-type-section">
+            <!-- Para Renta -->
+            <div class="property-type-info" *ngIf="isRenta()">
+              <div class="property-type-badge renta">
+                <mat-icon>event_repeat</mat-icon>
+                <span>Renta Mensual</span>
+              </div>
+              <div class="price-display">
+                <span class="price-label">Pago Mensual</span>
+                <span class="price-amount">{{ formatCurrency(getPrecioMensual()) }}</span>
+              </div>
+            </div>
+
+            <!-- Para Compra -->
+            <div class="property-type-info" *ngIf="isCompra()">
+              <div class="property-type-badge compra">
+                <mat-icon>shopping_cart</mat-icon>
+                <span>Propiedad Adquirida</span>
+              </div>
+              <div class="price-display">
+                <span class="price-label">Precio de Compra</span>
+                <span class="price-amount">{{ formatCurrency(getPrecioCompra()) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Action Button - Solo para renta -->
+        <div class="payment-action-section" *ngIf="isRenta()">
+          <button
+            mat-raised-button
+            color="primary"
+            class="pay-rent-button"
+            (click)="openRentPayment()"
+            matTooltip="Pagar la renta mensual con tarjeta"
+          >
+            <mat-icon>credit_card</mat-icon>
+            <div class="button-content">
+              <span class="button-label">Pagar Renta del Mes</span>
+              <span class="button-amount">{{ formatCurrency(getPrecioMensual()) }}</span>
+            </div>
+          </button>
+          <p class="payment-hint">
+            <mat-icon>info</mat-icon>
+            Pago seguro con tarjeta de crédito o débito
+          </p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Statistics Summary -->
+  <div class="stats-summary">
+    <div class="stat-card completed">
+      <mat-icon>check_circle</mat-icon>
+      <div class="stat-content">
+        <span class="stat-label">Total Pagado</span>
+        <span class="stat-value">{{ formatCurrency(totalPaid) }}</span>
+        <span class="stat-count">{{ getCompletedCount() }} pagos</span>
+      </div>
+    </div>
+
+    <!-- Solo mostrar pendientes para renta -->
+    <div class="stat-card pending" *ngIf="isRenta()">
+      <mat-icon>schedule</mat-icon>
+      <div class="stat-content">
+        <span class="stat-label">Pendiente de Pagar</span>
+        <span class="stat-value">{{ formatCurrency(totalPendingCosts) }}</span>
+        <span class="stat-count">{{ pendingCosts.length }} servicios</span>
+      </div>
+    </div>
+
+    <div class="stat-card total">
+      <mat-icon>receipt</mat-icon>
+      <div class="stat-content">
+        <span class="stat-label">Total de Pagos</span>
+        <span class="stat-value">{{ paymentCount }}</span>
+        <span class="stat-count">registros</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Costs Table - Solo para renta -->
+  <mat-card class="table-card pending-costs-card" *ngIf="isRenta() && pendingCosts.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>warning</mat-icon>
+        Otros Cargos Pendientes
+      </mat-card-title>
+      <p class="card-subtitle">Servicios adicionales por pagar</p>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngIf="isLoadingCosts" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Cargando costos pendientes...</p>
+      </div>
+
+      <div class="table-container" *ngIf="!isLoadingCosts">
+        <table mat-table [dataSource]="pendingCosts" class="pending-costs-table">
+          <!-- Nombre Servicio Column -->
+          <ng-container matColumnDef="nombre_servicio">
+            <th mat-header-cell *matHeaderCellDef>Servicio</th>
+            <td mat-cell *matCellDef="let cost">
+              <div class="service-info">
+                <strong>{{ cost.nombre_servicio }}</strong>
+                <small *ngIf="cost.descripcion">{{ cost.descripcion }}</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Monto Column -->
+          <ng-container matColumnDef="monto">
+            <th mat-header-cell *matHeaderCellDef>Monto</th>
+            <td mat-cell *matCellDef="let cost">
+              <span class="monto-pendiente">{{ formatCurrency(cost.monto) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Fecha Vencimiento Column -->
+          <ng-container matColumnDef="fecha_vencimiento">
+            <th mat-header-cell *matHeaderCellDef>Vencimiento</th>
+            <td mat-cell *matCellDef="let cost">
+              <div class="vencimiento-info">
+                <mat-icon>event</mat-icon>
+                <span>{{ cost.fecha_vencimiento | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Periodo Column -->
+          <ng-container matColumnDef="periodo">
+            <th mat-header-cell *matHeaderCellDef>Período</th>
+            <td mat-cell *matCellDef="let cost">
+              <mat-chip class="periodo-chip">{{ cost.periodo }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Acciones Column -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let cost">
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="openCardPayment(cost)"
+                matTooltip="Pagar con tarjeta de crédito o débito"
+                class="pay-button-small"
+              >
+                <mat-icon>credit_card</mat-icon>
+                Pagar
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="pendingCostsColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: pendingCostsColumns;"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Payments History Table -->
+  <mat-card class="table-card history-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>history</mat-icon>
+        Historial de Pagos
+      </mat-card-title>
+      <p class="card-subtitle">Todos tus pagos realizados</p>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Cargando pagos...</p>
+      </div>
+
+      <div class="table-container" *ngIf="!isLoading">
+        <table mat-table [dataSource]="payments" class="payments-table">
+          <!-- Fecha Pago Column -->
+          <ng-container matColumnDef="fecha_pago">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let payment">
+              <div class="fecha-info">
+                <mat-icon>event</mat-icon>
+                <span>{{ payment.fecha_pago | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Concepto Column -->
+          <ng-container matColumnDef="concepto">
+            <th mat-header-cell *matHeaderCellDef>Concepto</th>
+            <td mat-cell *matCellDef="let payment">
+              <div class="concepto-info">
+                <strong>{{ payment.servicioCosto?.nombre_servicio || 'Renta' }}</strong>
+                <small *ngIf="payment.referencia">Ref: {{ payment.referencia }}</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Monto Column -->
+          <ng-container matColumnDef="monto">
+            <th mat-header-cell *matHeaderCellDef>Monto</th>
+            <td mat-cell *matCellDef="let payment">
+              <span class="monto-pagado">{{ formatCurrency(payment.monto_pagado) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Método de Pago Column -->
+          <ng-container matColumnDef="metodo_pago">
+            <th mat-header-cell *matHeaderCellDef>Método</th>
+            <td mat-cell *matCellDef="let payment">
+              <div class="metodo-info">
+                <mat-icon>{{ getPaymentMethodIcon(payment.metodo_pago) }}</mat-icon>
+                <span>{{ payment.metodo_pago }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <!-- No data row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+              <div class="no-data-container">
+                <mat-icon>receipt</mat-icon>
+                <p>No tienes pagos registrados</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Paginator -->
+        <mat-paginator
+          [length]="totalPayments"
+          [pageSize]="pageSize"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="[5, 10, 25]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
